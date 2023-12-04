@@ -11,7 +11,7 @@ plugins:
 - name: ts
   wasm:
     url: https://downloads.sqlc.dev/plugin/sqlc-gen-typescript_0.1.0.wasm
-    sha256: TODO
+    sha256: c78326f02dfadcc0de61cd77c157aa0985d1f8f446efb8224c4c113ec3718ea0
 sql:
 - schema: "schema.sql"
   queries: "query.sql"
@@ -69,7 +69,7 @@ plugins:
 - name: ts
   wasm:
     url: https://downloads.sqlc.dev/plugin/sqlc-gen-typescript_0.1.0.wasm
-    sha256: TODO
+    sha256: c78326f02dfadcc0de61cd77c157aa0985d1f8f446efb8224c4c113ec3718ea0
 sql:
   - engine: "postgresql"
     queries: "query.sql"
@@ -256,7 +256,7 @@ plugins:
 - name: ts
   wasm:
     url: https://downloads.sqlc.dev/plugin/sqlc-gen-typescript_0.1.0.wasm
-    sha256: TODO
+    sha256: c78326f02dfadcc0de61cd77c157aa0985d1f8f446efb8224c4c113ec3718ea0
 sql:
 - schema: "schema.sql"
   queries: "query.sql"
@@ -277,7 +277,7 @@ plugins:
 - name: ts
   wasm:
     url: https://downloads.sqlc.dev/plugin/sqlc-gen-typescript_0.1.0.wasm
-    sha256: TODO
+    sha256: c78326f02dfadcc0de61cd77c157aa0985d1f8f446efb8224c4c113ec3718ea0
 sql:
 - schema: "schema.sql"
   queries: "query.sql"
@@ -299,7 +299,7 @@ plugins:
 - name: ts
   wasm:
     url: https://downloads.sqlc.dev/plugin/sqlc-gen-typescript_0.1.0.wasm
-    sha256: TODO
+    sha256: c78326f02dfadcc0de61cd77c157aa0985d1f8f446efb8224c4c113ec3718ea0
 sql:
 - schema: "schema.sql"
   queries: "query.sql"

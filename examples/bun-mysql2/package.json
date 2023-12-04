@@ -1,0 +1,14 @@
+{
+  "name": "bun-mysql2",
+  "module": "src/main.ts",
+  "type": "module",
+  "devDependencies": {
+    "bun-types": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "mysql2": "^3.6.5"
+  }
+}

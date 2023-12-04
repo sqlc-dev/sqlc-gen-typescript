@@ -1,0 +1,14 @@
+{
+  "name": "bun-pg",
+  "module": "src/main.ts",
+  "type": "module",
+  "devDependencies": {
+    "bun-types": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "pg": "^8.11.3"
+  }
+}

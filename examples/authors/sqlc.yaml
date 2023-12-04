@@ -1,0 +1,16 @@
+version: "2"
+cloud:
+  project: "01HAQMMECEYQYKFJN8MP16QC41"
+sql:
+- name: postgresql
+  schema: "postgresql/schema.sql"
+  queries: "postgresql/query.sql"
+  engine: "postgresql"
+  database:
+    managed: true
+- name: mysql
+  schema: "mysql/schema.sql"
+  queries: "mysql/query.sql"
+  engine: "mysql"
+  database:
+    managed: true

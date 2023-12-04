@@ -1,0 +1,20 @@
+name: ci
+on: [push]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: sqlc-dev/setup-sqlc@v4
+      with:
+        sqlc-version: '1.24.0'
+    - uses: actions/setup-node@v4
+    - run: wget https://github.com/bytecodealliance/javy/releases/download/v1.2.0/javy-x86_64-linux-v1.2.0.gz
+    - run: gzip -d javy-x86_64-linux-v1.2.0.gz
+    - run: chmod +x javy-x86_64-linux-v1.2.0
+    - run: npm install
+    - run: npx tsc --noEmit
+    - run: npx esbuild --bundle src/app.ts --tree-shaking=true --format=esm --target=es2020 --outfile=out.js
+    - run: ./javy-x86_64-linux-v1.2.0 compile out.js -o examples/plugin.wasm
+    - run: sqlc diff
+      working-directory: examples

@@ -1,0 +1,60 @@
+version: "2"
+plugins:
+- name: ts
+  wasm:
+    url: "file://plugin.wasm"
+sql:
+- schema: "authors/postgresql/schema.sql"
+  queries: "authors/postgresql/query.sql"
+  engine: "postgresql"
+  codegen:
+  - plugin: ts
+    out: node-pg/src/db
+    options:
+      runtime: node
+      driver: pg
+- schema: "authors/postgresql/schema.sql"
+  queries: "authors/postgresql/query.sql"
+  engine: "postgresql"
+  codegen:
+  - plugin: ts
+    out: bun-pg/src/db
+    options:
+      runtime: bun
+      driver: pg
+- schema: "authors/postgresql/schema.sql"
+  queries: "authors/postgresql/query.sql"
+  engine: "postgresql"
+  codegen:
+  - plugin: ts
+    out: node-postgres/src/db
+    options:
+      runtime: node
+      driver: postgres
+- schema: "authors/postgresql/schema.sql"
+  queries: "authors/postgresql/query.sql"
+  engine: "postgresql"
+  codegen:
+  - plugin: ts
+    out: bun-postgres/src/db
+    options:
+      runtime: bun
+      driver: postgres
+- schema: "authors/mysql/schema.sql"
+  queries: "authors/mysql/query.sql"
+  engine: "mysql"
+  codegen:
+  - plugin: ts
+    out: node-mysql2/src/db
+    options:
+      runtime: node
+      driver: mysql2
+- schema: "authors/mysql/schema.sql"
+  queries: "authors/mysql/query.sql"
+  engine: "mysql"
+  codegen:
+  - plugin: ts
+    out: bun-mysql2/src/db
+    options:
+      runtime: bun
+      driver: mysql2

@@ -1,0 +1,57 @@
+name: examples
+on: [push]
+jobs:
+  bun:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - dir: "examples/bun-mysql2"
+            qs: "mysql"
+          - dir: "examples/bun-postgres"
+            qs: "postgresql"
+          - dir: "examples/bun-pg"
+            qs: "postgresql"
+    steps:
+    - uses: actions/checkout@v4
+    - uses: sqlc-dev/setup-sqlc@v4
+      with:
+        sqlc-version: '1.24.0'
+    - uses: oven-sh/setup-bun@v1
+      with:
+        bun-version: latest
+    - run: bun install
+      working-directory: ${{ matrix.dir }}
+    - run: echo "DATABASE_URL=$(sqlc createdb --queryset ${{ matrix.qs }})" >> $GITHUB_ENV
+      working-directory: examples/authors
+      env:
+        SQLC_AUTH_TOKEN: ${{ secrets.SQLC_AUTH_TOKEN }}
+    - run: bun run src/main.ts
+      working-directory: ${{ matrix.dir }}
+  node:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - dir: "examples/node-mysql2"
+            qs: "mysql"
+          - dir: "examples/node-postgres"
+            qs: "postgresql"
+          - dir: "examples/node-pg"
+            qs: "postgresql"
+    steps:
+    - uses: actions/checkout@v4
+    - uses: sqlc-dev/setup-sqlc@v4
+      with:
+        sqlc-version: '1.24.0'
+    - uses: actions/setup-node@v4
+    - run: npm install
+      working-directory: ${{ matrix.dir }}
+    - run: npx tsc
+      working-directory: ${{ matrix.dir }}
+    - run: echo "DATABASE_URL=$(sqlc createdb --queryset ${{ matrix.qs }})" >> $GITHUB_ENV
+      working-directory: examples/authors
+      env:
+        SQLC_AUTH_TOKEN: ${{ secrets.SQLC_AUTH_TOKEN }}
+    - run: node ./src/main.js
+      working-directory: ${{ matrix.dir }}

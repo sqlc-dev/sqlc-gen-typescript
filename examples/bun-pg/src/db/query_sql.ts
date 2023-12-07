@@ -1,7 +1,5 @@
 import { QueryArrayConfig, QueryArrayResult } from "pg";
 
-import { IPostgresInterval } from "postgres-interval";
-
 interface Client {
     query: (config: QueryArrayConfig) => Promise<QueryArrayResult>;
 }

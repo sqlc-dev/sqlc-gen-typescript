@@ -24,6 +24,7 @@ import {
   Parameter,
   Column,
   File,
+  Query,
 } from "./gen/plugin/codegen_pb";
 
 import { argName, colName } from "./drivers/utlis";
@@ -44,7 +45,7 @@ interface Options {
 }
 
 interface Driver {
-  preamble: () => Node[];
+  preamble: (queries: Query[]) => Node[];
   columnType: (c?: Column) => TypeNode;
   execDecl: (
     name: string,
@@ -98,101 +99,98 @@ function codegen(input: GenerateRequest): GenerateResponse {
 
   // TODO: Verify options, parse them from protobuf honestly
 
-  const querymap = new Map<string, Node[]>();
-
-  const filenames = new Set(input.queries.map((q) => q.filename));
-  for (const filename of filenames) {
-    const nodes = driver.preamble();
-    querymap.set(filename, nodes);
-  }
+  const querymap = new Map<string, Query[]>();
 
   for (const query of input.queries) {
-    let nodes = querymap.get(query.filename);
-    if (!nodes) {
-      continue;
+    if (!querymap.has(query.filename)) {
+      querymap.set(query.filename, []);
     }
-
-    const colmap = new Map<string, number>();
-    for (let column of query.columns) {
-      if (!column.name) {
-        continue;
-      }
-      const count = colmap.get(column.name) || 0;
-      if (count > 0) {
-        column.name = `${column.name}_${count + 1}`;
-      }
-      colmap.set(column.name, count + 1);
-    }
-
-    const lowerName = query.name[0].toLowerCase() + query.name.slice(1);
-    const textName = `${lowerName}Query`;
-
-    nodes.push(
-      queryDecl(
-        textName,
-        `-- name: ${query.name} ${query.cmd}
-${query.text}`
-      )
-    );
-
-    const ctype = driver.columnType;
-
-    let argIface = undefined;
-    let returnIface = undefined;
-    if (query.params.length > 0) {
-      argIface = `${query.name}Args`;
-      nodes.push(argsDecl(argIface, ctype, query.params));
-    }
-    if (query.columns.length > 0) {
-      returnIface = `${query.name}Row`;
-      nodes.push(rowDecl(returnIface, ctype, query.columns));
-    }
-
-    switch (query.cmd) {
-      case ":exec": {
-        nodes.push(
-          driver.execDecl(lowerName, textName, argIface, query.params)
-        );
-        break;
-      }
-      case ":one": {
-        nodes.push(
-          driver.oneDecl(
-            lowerName,
-            textName,
-            argIface,
-            returnIface ?? "void",
-            query.params,
-            query.columns
-          )
-        );
-        break;
-      }
-      case ":many": {
-        nodes.push(
-          driver.manyDecl(
-            lowerName,
-            textName,
-            argIface,
-            returnIface ?? "void",
-            query.params,
-            query.columns
-          )
-        );
-        break;
-      }
-    }
+    const qs = querymap.get(query.filename);
+    qs?.push(query);
   }
 
-  for (const filename of filenames) {
-    const nodes = querymap.get(filename);
-    if (nodes) {
-      files.push(
-        new File({
-          name: `${filename.replace(".", "_")}.ts`,
-          contents: new TextEncoder().encode(printNode(nodes)),
-        })
+  for (const [filename, queries] of querymap.entries()) {
+    const nodes = driver.preamble(queries);
+
+    for (const query of queries) {
+      const colmap = new Map<string, number>();
+      for (let column of query.columns) {
+        if (!column.name) {
+          continue;
+        }
+        const count = colmap.get(column.name) || 0;
+        if (count > 0) {
+          column.name = `${column.name}_${count + 1}`;
+        }
+        colmap.set(column.name, count + 1);
+      }
+
+      const lowerName = query.name[0].toLowerCase() + query.name.slice(1);
+      const textName = `${lowerName}Query`;
+
+      nodes.push(
+        queryDecl(
+          textName,
+          `-- name: ${query.name} ${query.cmd}
+${query.text}`
+        )
       );
+
+      const ctype = driver.columnType;
+
+      let argIface = undefined;
+      let returnIface = undefined;
+      if (query.params.length > 0) {
+        argIface = `${query.name}Args`;
+        nodes.push(argsDecl(argIface, ctype, query.params));
+      }
+      if (query.columns.length > 0) {
+        returnIface = `${query.name}Row`;
+        nodes.push(rowDecl(returnIface, ctype, query.columns));
+      }
+
+      switch (query.cmd) {
+        case ":exec": {
+          nodes.push(
+            driver.execDecl(lowerName, textName, argIface, query.params)
+          );
+          break;
+        }
+        case ":one": {
+          nodes.push(
+            driver.oneDecl(
+              lowerName,
+              textName,
+              argIface,
+              returnIface ?? "void",
+              query.params,
+              query.columns
+            )
+          );
+          break;
+        }
+        case ":many": {
+          nodes.push(
+            driver.manyDecl(
+              lowerName,
+              textName,
+              argIface,
+              returnIface ?? "void",
+              query.params,
+              query.columns
+            )
+          );
+          break;
+        }
+      }
+      if (nodes) {
+        files.push(
+          new File({
+            name: `${filename.replace(".", "_")}.ts`,
+            contents: new TextEncoder().encode(printNode(nodes)),
+          })
+        );
+      }
     }
   }
 

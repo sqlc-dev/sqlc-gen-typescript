@@ -1,6 +1,6 @@
-import { SyntaxKind, NodeFlags, TypeNode, factory } from "typescript";
+import { SyntaxKind, NodeFlags, Node, TypeNode, factory } from "typescript";
 
-import { Parameter, Column } from "../gen/plugin/codegen_pb";
+import { Parameter, Column, Query } from "../gen/plugin/codegen_pb";
 import { argName, colName } from "./utlis";
 
 export function columnType(column?: Column): TypeNode {
@@ -287,8 +287,8 @@ export function columnType(column?: Column): TypeNode {
   ]);
 }
 
-export function preamble() {
-  return [
+export function preamble(queries: Query[]) {
+  const imports: Node[] = [
     factory.createImportDeclaration(
       undefined,
       factory.createImportClause(
@@ -310,22 +310,36 @@ export function preamble() {
       factory.createStringLiteral("pg"),
       undefined
     ),
-    factory.createImportDeclaration(
-      undefined,
-      factory.createImportClause(
-        false,
+  ];
+
+  const hasInterval = queries.some(
+    (query) =>
+      query.params.some((p) => p.column?.type?.name === "interval") ||
+      query.columns.some((c) => c.type?.name === "interval")
+  );
+
+  if (hasInterval) {
+    imports.push(
+      factory.createImportDeclaration(
         undefined,
-        factory.createNamedImports([
-          factory.createImportSpecifier(
-            false,
-            undefined,
-            factory.createIdentifier("IPostgresInterval")
-          ),
-        ])
-      ),
-      factory.createStringLiteral("postgres-interval"),
-      undefined
-    ),
+        factory.createImportClause(
+          false,
+          undefined,
+          factory.createNamedImports([
+            factory.createImportSpecifier(
+              false,
+              undefined,
+              factory.createIdentifier("IPostgresInterval")
+            ),
+          ])
+        ),
+        factory.createStringLiteral("postgres-interval"),
+        undefined
+      )
+    );
+  }
+
+  imports.push(
     factory.createInterfaceDeclaration(
       undefined,
       factory.createIdentifier("Client"),
@@ -363,8 +377,10 @@ export function preamble() {
           )
         ),
       ]
-    ),
-  ];
+    )
+  );
+
+  return imports;
 }
 
 function funcParamsDecl(iface: string | undefined, params: Parameter[]) {

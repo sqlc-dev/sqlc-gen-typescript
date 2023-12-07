@@ -165,7 +165,7 @@ export function columnType(column?: Column): TypeNode {
   ]);
 }
 
-export function preamble() {
+export function preamble(queries: unknown) {
   return [
     factory.createImportDeclaration(
       undefined,

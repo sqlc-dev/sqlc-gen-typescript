@@ -7,8 +7,14 @@ export function columnType(column?: Column): TypeNode {
   if (column === undefined || column.type === undefined) {
     return factory.createKeywordTypeNode(SyntaxKind.AnyKeyword);
   }
+  // Some of the type names have the `pgcatalog.` prefix. Remove this.
+  let typeName = column.type.name;
+  const pgCatalog = "pg_catalog.";
+  if (typeName.startsWith(pgCatalog)) {
+    typeName = typeName.slice(pgCatalog.length);
+  }
   let typ: TypeNode = factory.createKeywordTypeNode(SyntaxKind.StringKeyword);
-  switch (column.type.name) {
+  switch (typeName) {
     case "aclitem": {
       // string
       break;

@@ -2,13 +2,20 @@ import { SyntaxKind, NodeFlags, TypeNode, factory } from "typescript";
 
 import { Parameter, Column } from "../gen/plugin/codegen_pb";
 import { argName } from "./utlis";
+import { log } from "../logger";
 
 export function columnType(column?: Column): TypeNode {
   if (column === undefined || column.type === undefined) {
     return factory.createKeywordTypeNode(SyntaxKind.AnyKeyword);
   }
+  // Some of the type names have the `pgcatalog.` prefix. Remove this.
+  let typeName = column.type.name;
+  const pgCatalog = "pg_catalog.";
+  if (typeName.startsWith(pgCatalog)) {
+    typeName = typeName.slice(pgCatalog.length);
+  }
   let typ: TypeNode = factory.createKeywordTypeNode(SyntaxKind.StringKeyword);
-  switch (column.type.name) {
+  switch (typeName) {
     case "aclitem": {
       // string
       break;
@@ -228,6 +235,10 @@ export function columnType(column?: Column): TypeNode {
     }
     case "xml": {
       // string
+      break;
+    }
+    default: {
+      log(`unknown type ${column.type?.name}`);
       break;
     }
   }

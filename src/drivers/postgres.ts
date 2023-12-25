@@ -1,7 +1,7 @@
 import { SyntaxKind, NodeFlags, TypeNode, factory } from "typescript";
 
 import { Parameter, Column } from "../gen/plugin/codegen_pb";
-import { argName } from "./utlis";
+import { argName, colName } from "./utlis";
 import { log } from "../logger";
 
 export function columnType(column?: Column): TypeNode {
@@ -393,33 +393,62 @@ export function manyDecl(
     factory.createBlock(
       [
         factory.createReturnStatement(
-          factory.createAwaitExpression(
-            factory.createCallExpression(
-              factory.createPropertyAccessExpression(
-                factory.createIdentifier("sql"),
-                factory.createIdentifier("unsafe")
+          factory.createCallExpression(
+            factory.createPropertyAccessExpression(
+              factory.createAwaitExpression(
+                factory.createCallExpression(
+                  factory.createPropertyAccessExpression(
+                    factory.createCallExpression(
+                      factory.createPropertyAccessExpression(
+                        factory.createIdentifier("sql"),
+                        factory.createIdentifier("unsafe")
+                      ),
+                      undefined,
+                      [
+                        factory.createIdentifier(queryName),
+                        factory.createArrayLiteralExpression(
+                          params.map((param, i) =>
+                            factory.createPropertyAccessExpression(
+                              factory.createIdentifier("args"),
+                              factory.createIdentifier(argName(i, param.column))
+                            )
+                          ),
+                          false
+                        ),
+                      ]
+                    ),
+                    factory.createIdentifier("values"),
+                  ),
+                  undefined,
+                  undefined,
+                )
               ),
-              [
-                factory.createArrayTypeNode(
-                  factory.createTypeReferenceNode(
-                    factory.createIdentifier(returnIface),
-                    undefined
-                  )
-                ),
-              ],
-              [
-                factory.createIdentifier(queryName),
-                factory.createArrayLiteralExpression(
-                  params.map((param, i) =>
-                    factory.createPropertyAccessExpression(
-                      factory.createIdentifier("args"),
-                      factory.createIdentifier(argName(i, param.column))
+              factory.createIdentifier("map"),
+            ),
+            undefined,
+            [
+              factory.createArrowFunction(
+                undefined,
+                undefined,
+                [
+                  factory.createParameterDeclaration(undefined, undefined, "row"),
+                ],
+                undefined,
+                factory.createToken(SyntaxKind.EqualsGreaterThanToken),
+                factory.createObjectLiteralExpression(
+                  columns.map((col, i) =>
+                    factory.createPropertyAssignment(
+                      factory.createIdentifier(colName(i, col)),
+                      factory.createElementAccessExpression(
+                        factory.createIdentifier("row"),
+                        factory.createNumericLiteral(`${i}`)
+                      )
                     )
                   ),
-                  false
-                ),
-              ]
-            )
+                  true
+                )
+              ),
+            ]
           )
         ),
       ],
@@ -469,29 +498,29 @@ export function oneDecl(
                 factory.createAwaitExpression(
                   factory.createCallExpression(
                     factory.createPropertyAccessExpression(
-                      factory.createIdentifier("sql"),
-                      factory.createIdentifier("unsafe")
-                    ),
-                    [
-                      factory.createArrayTypeNode(
-                        factory.createTypeReferenceNode(
-                          factory.createIdentifier(returnIface),
-                          undefined
-                        )
-                      ),
-                    ],
-                    [
-                      factory.createIdentifier(queryName),
-                      factory.createArrayLiteralExpression(
-                        params.map((param, i) =>
-                          factory.createPropertyAccessExpression(
-                            factory.createIdentifier("args"),
-                            factory.createIdentifier(argName(i, param.column))
-                          )
+                      factory.createCallExpression(
+                        factory.createPropertyAccessExpression(
+                          factory.createIdentifier("sql"),
+                          factory.createIdentifier("unsafe")
                         ),
-                        false
+                        undefined,
+                        [
+                          factory.createIdentifier(queryName),
+                          factory.createArrayLiteralExpression(
+                            params.map((param, i) =>
+                              factory.createPropertyAccessExpression(
+                                factory.createIdentifier("args"),
+                                factory.createIdentifier(argName(i, param.column))
+                              )
+                            ),
+                            false
+                          ),
+                        ]
                       ),
-                    ]
+                      factory.createIdentifier("values")
+                    ),
+                    undefined,
+                    undefined,
                   )
                 )
               ),
@@ -519,10 +548,27 @@ export function oneDecl(
           ),
           undefined
         ),
+        factory.createVariableStatement(
+          undefined,
+          factory.createVariableDeclarationList([
+            factory.createVariableDeclaration("row", undefined, undefined, factory.createElementAccessExpression(
+              factory.createIdentifier("rows"),
+              factory.createNumericLiteral("0")
+            )),
+          ], NodeFlags.Const)
+        ),
         factory.createReturnStatement(
-          factory.createElementAccessExpression(
-            factory.createIdentifier("rows"),
-            factory.createNumericLiteral("0")
+          factory.createObjectLiteralExpression(
+            columns.map((col, i) =>
+              factory.createPropertyAssignment(
+                factory.createIdentifier(colName(i, col)),
+                factory.createElementAccessExpression(
+                  factory.createIdentifier("row"),
+                  factory.createNumericLiteral(`${i}`)
+                )
+              )
+            ),
+            true
           )
         ),
       ],

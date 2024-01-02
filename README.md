@@ -10,8 +10,8 @@ version: '2'
 plugins:
 - name: ts
   wasm:
-    url: https://downloads.sqlc.dev/plugin/sqlc-gen-typescript_0.1.2.wasm
-    sha256: f8b59cdd78b35fae157a95c5813cb09b1ebdd9a31acf2d7015465539986ccd2b
+    url: https://downloads.sqlc.dev/plugin/sqlc-gen-typescript_0.1.3.wasm
+    sha256: 287df8f6cc06377d67ad5ba02c9e0f00c585509881434d15ea8bd9fc751a9368
 sql:
 - schema: "schema.sql"
   queries: "query.sql"
@@ -68,8 +68,8 @@ cloud:
 plugins:
 - name: ts
   wasm:
-    url: https://downloads.sqlc.dev/plugin/sqlc-gen-typescript_0.1.1.wasm
-    sha256: 241c2b00bd96192eaac85f5ba435ced0d510c93f18380751c1dab3ad2fa0cfbc
+    url: https://downloads.sqlc.dev/plugin/sqlc-gen-typescript_0.1.3.wasm
+    sha256: 287df8f6cc06377d67ad5ba02c9e0f00c585509881434d15ea8bd9fc751a9368
 sql:
   - engine: "postgresql"
     queries: "query.sql"
@@ -255,8 +255,8 @@ version: '2'
 plugins:
 - name: ts
   wasm:
-    url: https://downloads.sqlc.dev/plugin/sqlc-gen-typescript_0.1.2.wasm
-    sha256: f8b59cdd78b35fae157a95c5813cb09b1ebdd9a31acf2d7015465539986ccd2b
+    url: https://downloads.sqlc.dev/plugin/sqlc-gen-typescript_0.1.3.wasm
+    sha256: 287df8f6cc06377d67ad5ba02c9e0f00c585509881434d15ea8bd9fc751a9368
 sql:
 - schema: "schema.sql"
   queries: "query.sql"
@@ -276,8 +276,8 @@ version: '2'
 plugins:
 - name: ts
   wasm:
-    url: https://downloads.sqlc.dev/plugin/sqlc-gen-typescript_0.1.2.wasm
-    sha256: f8b59cdd78b35fae157a95c5813cb09b1ebdd9a31acf2d7015465539986ccd2b
+    url: https://downloads.sqlc.dev/plugin/sqlc-gen-typescript_0.1.3.wasm
+    sha256: 287df8f6cc06377d67ad5ba02c9e0f00c585509881434d15ea8bd9fc751a9368
 sql:
 - schema: "schema.sql"
   queries: "query.sql"
@@ -298,8 +298,8 @@ version: '2'
 plugins:
 - name: ts
   wasm:
-    url: https://downloads.sqlc.dev/plugin/sqlc-gen-typescript_0.1.2.wasm
-    sha256: f8b59cdd78b35fae157a95c5813cb09b1ebdd9a31acf2d7015465539986ccd2b
+    url: https://downloads.sqlc.dev/plugin/sqlc-gen-typescript_0.1.3.wasm
+    sha256: 287df8f6cc06377d67ad5ba02c9e0f00c585509881434d15ea8bd9fc751a9368
 sql:
 - schema: "schema.sql"
   queries: "query.sql"

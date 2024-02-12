@@ -1,0 +1,18 @@
+{
+  "name": "node-better-sqlite3",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.9",
+    "typescript": "^5.2.2"
+  },
+  "dependencies": {
+    "better-sqlite3": "^9.4.1"
+  }
+}

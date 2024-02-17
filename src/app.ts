@@ -54,6 +54,12 @@ interface Driver {
     iface: string | undefined,
     params: Parameter[]
   ) => Node;
+  execlastidDecl: (
+    name: string,
+    text: string,
+    iface: string | undefined,
+    params: Parameter[]
+  ) => Node;
   manyDecl: (
     name: string,
     text: string,
@@ -78,10 +84,10 @@ function createNodeGenerator(driver?: string): Driver {
       return mysql2;
     }
     case "pg": {
-      return pg;
+      return pg as any;
     }
     case "postgres": {
-      return postgres;
+      return postgres as any;
     }
     case "better-sqlite3": {
       return betterSQLite3;
@@ -158,6 +164,12 @@ ${query.text}`
           nodes.push(
             driver.execDecl(lowerName, textName, argIface, query.params)
           );
+          break;
+        }
+        case ":execlastid": {
+          nodes.push(
+            driver.execlastidDecl(lowerName, textName, argIface, query.params)
+          )
           break;
         }
         case ":one": {

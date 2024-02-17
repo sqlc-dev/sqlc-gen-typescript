@@ -10,7 +10,14 @@ ORDER BY name;
 INSERT INTO authors (
   name, bio
 ) VALUES (
-  ?, ? 
+  ?, ?
+);
+
+/* name: CreateAuthorReturnId :execlastid */
+INSERT INTO authors (
+  name, bio
+) VALUES (
+  ?, ?
 );
 
 /* name: DeleteAuthor :exec */

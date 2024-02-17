@@ -64,7 +64,7 @@ export const createAuthorQuery = `-- name: CreateAuthor :exec
 INSERT INTO authors (
   name, bio
 ) VALUES (
-  ?, ? 
+  ?, ?
 )`;
 
 export interface CreateAuthorArgs {
@@ -77,6 +77,26 @@ export async function createAuthor(client: Client, args: CreateAuthorArgs): Prom
         sql: createAuthorQuery,
         values: [args.name, args.bio]
     });
+}
+
+export const createAuthorReturnIdQuery = `-- name: CreateAuthorReturnId :execlastid
+INSERT INTO authors (
+  name, bio
+) VALUES (
+  ?, ?
+)`;
+
+export interface CreateAuthorReturnIdArgs {
+    name: string;
+    bio: string | null;
+}
+
+export async function createAuthorReturnId(client: Client, args: CreateAuthorReturnIdArgs): Promise<number> {
+    const [result] = await client.query<ResultSetHeader>({
+        sql: createAuthorReturnIdQuery,
+        values: [args.name, args.bio]
+    });
+    return result?.insertId ?? 0;
 }
 
 export const deleteAuthorQuery = `-- name: DeleteAuthor :exec

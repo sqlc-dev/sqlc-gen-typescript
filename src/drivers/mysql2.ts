@@ -178,6 +178,11 @@ export function preamble(queries: unknown) {
             undefined,
             factory.createIdentifier("RowDataPacket")
           ),
+          factory.createImportSpecifier(
+            false,
+            undefined,
+            factory.createIdentifier("ResultSetHeader")
+          ),
         ])
       ),
       factory.createStringLiteral("mysql2/promise"),
@@ -611,10 +616,114 @@ export function oneDecl(
   );
 }
 
+export function execlastidDecl(
+  funcName: string,
+  queryName: string,
+  argIface: string | undefined,
+  params: Parameter[]
+) {
+  const funcParams = funcParamsDecl(argIface, params);
+
+  return factory.createFunctionDeclaration(
+    [
+      factory.createToken(SyntaxKind.ExportKeyword),
+      factory.createToken(SyntaxKind.AsyncKeyword),
+    ],
+    undefined,
+    factory.createIdentifier(funcName),
+    undefined,
+    funcParams,
+    factory.createTypeReferenceNode(factory.createIdentifier("Promise"), [
+      factory.createTypeReferenceNode('number', undefined),
+    ]),
+    factory.createBlock(
+      [
+        factory.createVariableStatement(
+          undefined,
+          factory.createVariableDeclarationList(
+            [
+              factory.createVariableDeclaration(
+                factory.createArrayBindingPattern([
+                  factory.createBindingElement(
+                    undefined,
+                    undefined,
+                    factory.createIdentifier("result"),
+                    undefined
+                  ),
+                ]),
+                undefined,
+                undefined,
+                factory.createAwaitExpression(
+                  factory.createCallExpression(
+                    factory.createPropertyAccessExpression(
+                      factory.createIdentifier("client"),
+                      factory.createIdentifier("query")
+                    ),
+                    [
+                      factory.createTypeReferenceNode(
+                        factory.createIdentifier("ResultSetHeader"),
+                        undefined
+                      )
+                    ],
+                    [
+                      factory.createObjectLiteralExpression(
+                        [
+                          factory.createPropertyAssignment(
+                            factory.createIdentifier("sql"),
+                            factory.createIdentifier(queryName)
+                          ),
+                          factory.createPropertyAssignment(
+                            factory.createIdentifier("values"),
+                            factory.createArrayLiteralExpression(
+                              params.map((param, i) =>
+                                factory.createPropertyAccessExpression(
+                                  factory.createIdentifier("args"),
+                                  factory.createIdentifier(
+                                    argName(i, param.column)
+                                  )
+                                )
+                              ),
+                              false
+                            )
+                          ),
+                        ],
+                        true
+                      ),
+                    ]
+                  )
+                )
+              )
+            ],
+            NodeFlags.Const |
+              // NodeFlags.Constant |
+              NodeFlags.AwaitContext |
+              // NodeFlags.Constant |
+              NodeFlags.ContextFlags |
+              NodeFlags.TypeExcludesFlags
+          )
+        ),
+        factory.createReturnStatement(
+          factory.createBinaryExpression(
+            factory.createPropertyAccessChain(
+              factory.createIdentifier("result"),
+              factory.createToken(SyntaxKind.QuestionDotToken),
+              factory.createIdentifier("insertId")
+            ),
+            factory.createToken(SyntaxKind.QuestionQuestionToken),
+            factory.createNumericLiteral(0)
+          )
+        ),
+      ],
+      true
+    )
+  )
+}
+
 export default {
   columnType,
   preamble,
   execDecl,
   manyDecl,
   oneDecl,
+  execlastidDecl,
 };

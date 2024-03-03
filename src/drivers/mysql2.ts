@@ -2,7 +2,7 @@ import { SyntaxKind, NodeFlags, TypeNode, factory } from "typescript";
 
 // import { writeFileSync, STDIO } from "javy/fs";
 
-import { Parameter, Column } from "../gen/plugin/codegen_pb";
+import { Parameter, Column, Query } from "../gen/plugin/codegen_pb";
 import { argName, colName } from "./utlis";
 
 export function columnType(column?: Column): TypeNode {
@@ -165,7 +165,8 @@ export function columnType(column?: Column): TypeNode {
   ]);
 }
 
-export function preamble(queries: unknown) {
+export function preamble(queries: Query[]) {
+  const hasExecLastIdCmd = queries.some((query) => query.cmd === ":execlastid");
   return [
     factory.createImportDeclaration(
       undefined,
@@ -178,11 +179,15 @@ export function preamble(queries: unknown) {
             undefined,
             factory.createIdentifier("RowDataPacket")
           ),
-          factory.createImportSpecifier(
-            false,
-            undefined,
-            factory.createIdentifier("ResultSetHeader")
-          ),
+          ...(hasExecLastIdCmd
+            ? [
+                factory.createImportSpecifier(
+                  false,
+                  undefined,
+                  factory.createIdentifier("ResultSetHeader")
+                ),
+              ]
+            : []),
         ])
       ),
       factory.createStringLiteral("mysql2/promise"),
@@ -634,7 +639,7 @@ export function execlastidDecl(
     undefined,
     funcParams,
     factory.createTypeReferenceNode(factory.createIdentifier("Promise"), [
-      factory.createTypeReferenceNode('number', undefined),
+      factory.createTypeReferenceNode("number", undefined),
     ]),
     factory.createBlock(
       [
@@ -663,7 +668,7 @@ export function execlastidDecl(
                       factory.createTypeReferenceNode(
                         factory.createIdentifier("ResultSetHeader"),
                         undefined
-                      )
+                      ),
                     ],
                     [
                       factory.createObjectLiteralExpression(
@@ -692,7 +697,7 @@ export function execlastidDecl(
                     ]
                   )
                 )
-              )
+              ),
             ],
             NodeFlags.Const |
               // NodeFlags.Constant |
@@ -716,7 +721,7 @@ export function execlastidDecl(
       ],
       true
     )
-  )
+  );
 }
 
 export default {

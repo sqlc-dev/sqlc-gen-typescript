@@ -54,6 +54,12 @@ interface Driver {
     iface: string | undefined,
     params: Parameter[]
   ) => Node;
+  execlastidDecl: (
+    name: string,
+    text: string,
+    iface: string | undefined,
+    params: Parameter[]
+  ) => Node;
   manyDecl: (
     name: string,
     text: string,
@@ -158,6 +164,12 @@ ${query.text}`
           nodes.push(
             driver.execDecl(lowerName, textName, argIface, query.params)
           );
+          break;
+        }
+        case ":execlastid": {
+          nodes.push(
+            driver.execlastidDecl(lowerName, textName, argIface, query.params)
+          )
           break;
         }
         case ":one": {

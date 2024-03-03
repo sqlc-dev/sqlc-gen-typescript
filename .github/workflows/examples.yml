@@ -16,6 +16,9 @@ jobs:
     - uses: oven-sh/setup-bun@v1
       with:
         bun-version: latest
+    - uses: shogo82148/actions-setup-mysql@v1
+      with:
+        mysql-version: "8.1"
     - run: bun install
       working-directory: ${{ matrix.dir }}
     - run: echo "DATABASE_URL=$(sqlc createdb --queryset ${{ matrix.qs }})" >> $GITHUB_ENV
@@ -70,16 +73,21 @@ jobs:
       with:
         sqlc-version: '1.24.0'
     - uses: actions/setup-node@v4
+    - uses: shogo82148/actions-setup-mysql@v1
+      with:
+        mysql-version: "8.1"
     - run: npm install
       working-directory: ${{ matrix.dir }}
     - run: npx tsc
       working-directory: ${{ matrix.dir }}
-    - run: echo "DATABASE_URL=$(sqlc createdb --queryset ${{ matrix.qs }})" >> $GITHUB_ENV
-      working-directory: examples/authors
+    - run: mysql "$DATABASE_URL" < schema.sql
+      working-directory: examples/authors/mysql
       env:
-        SQLC_AUTH_TOKEN: ${{ secrets.SQLC_AUTH_TOKEN }}
+        DATABASE_URL: root:@localhost:3306/mysql
     - run: node ./src/main.js
       working-directory: ${{ matrix.dir }}
+      env:
+        DATABASE_URL: root:@localhost:3306/mysql
 
   node-postgresql:
     runs-on: ubuntu-latest

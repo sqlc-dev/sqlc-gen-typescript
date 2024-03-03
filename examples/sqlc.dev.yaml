@@ -58,3 +58,12 @@ sql:
     options:
       runtime: bun
       driver: mysql2
+- schema: "authors/sqlite/schema.sql"
+  queries: "authors/sqlite/query.sql"
+  engine: "sqlite"
+  codegen:
+  - plugin: ts
+    out: node-better-sqlite3/src/db
+    options:
+      runtime: node
+      driver: better-sqlite3

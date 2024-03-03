@@ -28,6 +28,7 @@ import {
 } from "./gen/plugin/codegen_pb";
 
 import { argName, colName } from "./drivers/utlis";
+import betterSQLite3 from "./drivers/better-sqlite3";
 import pg from "./drivers/pg";
 import postgres from "./drivers/postgres";
 import mysql2 from "./drivers/mysql2";
@@ -81,6 +82,9 @@ function createNodeGenerator(driver?: string): Driver {
     }
     case "postgres": {
       return postgres;
+    }
+    case "better-sqlite3": {
+      return betterSQLite3;
     }
   }
   throw new Error(`unknown driver: ${driver}`);

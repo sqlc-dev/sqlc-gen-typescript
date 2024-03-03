@@ -311,3 +311,24 @@ sql:
       runtime: node
       driver: mysql2 # npm package name
 ```
+
+### SQLite and better-sqlite3 (Beta)
+
+```yaml
+version: '2'
+plugins:
+- name: ts
+  wasm:
+    url: https://downloads.sqlc.dev/plugin/sqlc-gen-typescript_0.1.3.wasm
+    sha256: 287df8f6cc06377d67ad5ba02c9e0f00c585509881434d15ea8bd9fc751a9368
+sql:
+- schema: "schema.sql"
+  queries: "query.sql"
+  engine: sqlite
+  codegen:
+  - out: db
+    plugin: ts
+    options:
+      runtime: node
+      driver: better-sqlite3 # npm package name
+```

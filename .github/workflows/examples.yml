@@ -1,5 +1,5 @@
 name: examples
-on: [push]
+on: [push, pull_request]
 jobs:
   bun-mysql:
     runs-on: ubuntu-latest

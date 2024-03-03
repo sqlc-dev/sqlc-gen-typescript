@@ -5,6 +5,11 @@ import { SyntaxKind, NodeFlags, TypeNode, factory } from "typescript";
 import { Parameter, Column, Query } from "../gen/plugin/codegen_pb";
 import { argName, colName } from "./utlis";
 
+export interface Mysql2Options {
+  support_big_numbers?: boolean;
+  big_number_strings?: boolean;
+}
+
 function funcParamsDecl(iface: string | undefined, params: Parameter[]) {
   let funcParams = [
     factory.createParameterDeclaration(
@@ -40,6 +45,12 @@ function funcParamsDecl(iface: string | undefined, params: Parameter[]) {
 }
 
 export class Driver {
+  private readonly options: Mysql2Options
+
+  constructor(options?: Mysql2Options) {
+    this.options = options ?? {}
+  }
+
   columnType(column?: Column): TypeNode {
     if (column === undefined || column.type === undefined) {
       return factory.createKeywordTypeNode(SyntaxKind.AnyKeyword);
@@ -49,6 +60,18 @@ export class Driver {
     switch (column.type.name) {
       case "bigint": {
         typ = factory.createKeywordTypeNode(SyntaxKind.NumberKeyword);
+
+        if (this.options.support_big_numbers) {
+          if (this.options.big_number_strings) {
+            typ = factory.createKeywordTypeNode(SyntaxKind.StringKeyword)
+          } else {
+            typ = factory.createUnionTypeNode([
+              factory.createKeywordTypeNode(SyntaxKind.NumberKeyword),
+              factory.createKeywordTypeNode(SyntaxKind.StringKeyword)
+            ])
+          }
+        }
+
         break;
       }
       case "binary": {

@@ -57,17 +57,13 @@ jobs:
       env:
         DATABASE_URL: ${{ steps.postgres.outputs.connection-uri }}?sslmode=disable
 
-  node:
+  node-mysql:
     runs-on: ubuntu-latest
     strategy:
       matrix:
         include:
           - dir: "examples/node-mysql2"
             qs: "mysql"
-          - dir: "examples/node-postgres"
-            qs: "postgresql"
-          - dir: "examples/node-pg"
-            qs: "postgresql"
     steps:
     - uses: actions/checkout@v4
     - uses: sqlc-dev/setup-sqlc@v4
@@ -84,3 +80,35 @@ jobs:
         SQLC_AUTH_TOKEN: ${{ secrets.SQLC_AUTH_TOKEN }}
     - run: node ./src/main.js
       working-directory: ${{ matrix.dir }}
+
+  node-postgresql:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - dir: "examples/node-postgres"
+            qs: "postgresql"
+          - dir: "examples/node-pg"
+            qs: "postgresql"
+    steps:
+    - uses: actions/checkout@v4
+    - uses: sqlc-dev/setup-sqlc@v4
+      with:
+        sqlc-version: '1.24.0'
+    - uses: actions/setup-node@v4
+    - uses: sqlc-dev/action-setup-postgres@master
+      with:
+        postgres-version: "16"
+      id: postgres
+    - run: npm install
+      working-directory: ${{ matrix.dir }}
+    - run: npx tsc
+      working-directory: ${{ matrix.dir }}
+    - run: psql -f schema.sql "$DATABASE_URL"
+      working-directory: examples/authors/postgresql
+      env:
+        DATABASE_URL: ${{ steps.postgres.outputs.connection-uri }}?sslmode=disable
+    - run: node ./src/main.js
+      working-directory: ${{ matrix.dir }}
+      env:
+        DATABASE_URL: ${{ steps.postgres.outputs.connection-uri }}?sslmode=disable

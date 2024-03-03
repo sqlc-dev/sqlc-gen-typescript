@@ -28,10 +28,10 @@ import {
 } from "./gen/plugin/codegen_pb";
 
 import { argName, colName } from "./drivers/utlis";
-import betterSQLite3 from "./drivers/better-sqlite3";
+import { Driver as Sqlite3Driver } from "./drivers/better-sqlite3";
 import { Driver as PgDriver } from "./drivers/pg";
 import { Driver as PostgresDriver } from "./drivers/postgres";
-import mysql2 from "./drivers/mysql2";
+import { Driver as MysqlDriver } from "./drivers/mysql2";
 
 // Read input from stdin
 const input = readInput();
@@ -81,7 +81,7 @@ interface Driver {
 function createNodeGenerator(driver?: string): Driver {
   switch (driver) {
     case "mysql2": {
-      return mysql2;
+      return new MysqlDriver();
     }
     case "pg": {
       return new PgDriver();
@@ -90,7 +90,7 @@ function createNodeGenerator(driver?: string): Driver {
       return new PostgresDriver();
     }
     case "better-sqlite3": {
-      return betterSQLite3;
+      return new Sqlite3Driver();
     }
   }
   throw new Error(`unknown driver: ${driver}`);

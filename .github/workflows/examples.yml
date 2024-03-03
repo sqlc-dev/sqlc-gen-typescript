@@ -80,10 +80,8 @@ jobs:
       working-directory: ${{ matrix.dir }}
     - run: npx tsc
       working-directory: ${{ matrix.dir }}
-    - run: mysql "$DATABASE_URL" < schema.sql
+    - run: mysql --user="root" --database="mysql" < schema.sql
       working-directory: examples/authors/mysql
-      env:
-        DATABASE_URL: root:@localhost:3306/mysql
     - run: node ./src/main.js
       working-directory: ${{ matrix.dir }}
       env:

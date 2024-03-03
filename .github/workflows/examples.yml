@@ -21,12 +21,12 @@ jobs:
         mysql-version: "8.1"
     - run: bun install
       working-directory: ${{ matrix.dir }}
-    - run: echo "DATABASE_URL=$(sqlc createdb --queryset ${{ matrix.qs }})" >> $GITHUB_ENV
-      working-directory: examples/authors
-      env:
-        SQLC_AUTH_TOKEN: ${{ secrets.SQLC_AUTH_TOKEN }}
+    - run: mysql --user="root" --database="mysql" < schema.sql
+      working-directory: examples/authors/mysql
     - run: bun run src/main.ts
       working-directory: ${{ matrix.dir }}
+      env:
+        DATABASE_URL: mysql://root:@localhost:3306/mysql
 
   bun-postgresql:
     runs-on: ubuntu-latest

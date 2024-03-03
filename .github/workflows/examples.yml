@@ -49,7 +49,7 @@ jobs:
     - run: bun install
       working-directory: ${{ matrix.dir }}
     - run: psql -f schema.sql "$DATABASE_URL"
-      working-directory: examples/authors
+      working-directory: examples/authors/postgresql
       env:
         DATABASE_URL: ${{ steps.postgres.outputs.connection-uri }}?sslmode=disable
     - run: bun run src/main.ts

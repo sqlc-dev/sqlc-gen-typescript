@@ -608,7 +608,7 @@ export function execlastidDecl(
   argIface: string | undefined,
   params: Parameter[]
 ): FunctionDeclaration {
-  throw new Error('postgres driver does not support :execlastid')
+  throw new Error('postgres driver currently does not support :execlastid')
 }
 
 export default {

@@ -22,6 +22,9 @@ export async function getAuthor(sql: Sql, args: GetAuthorArgs): Promise<GetAutho
         return null;
     }
     const row = rows[0];
+    if (!row) {
+        return null;
+    }
     return {
         id: row[0],
         name: row[1],
@@ -72,6 +75,9 @@ export async function createAuthor(sql: Sql, args: CreateAuthorArgs): Promise<Cr
         return null;
     }
     const row = rows[0];
+    if (!row) {
+        return null;
+    }
     return {
         id: row[0],
         name: row[1],

@@ -417,13 +417,13 @@ export function manyDecl(
                         ),
                       ]
                     ),
-                    factory.createIdentifier("values"),
+                    factory.createIdentifier("values")
                   ),
                   undefined,
-                  undefined,
+                  undefined
                 )
               ),
-              factory.createIdentifier("map"),
+              factory.createIdentifier("map")
             ),
             undefined,
             [
@@ -431,7 +431,11 @@ export function manyDecl(
                 undefined,
                 undefined,
                 [
-                  factory.createParameterDeclaration(undefined, undefined, "row"),
+                  factory.createParameterDeclaration(
+                    undefined,
+                    undefined,
+                    "row"
+                  ),
                 ],
                 undefined,
                 factory.createToken(SyntaxKind.EqualsGreaterThanToken),
@@ -510,7 +514,9 @@ export function oneDecl(
                             params.map((param, i) =>
                               factory.createPropertyAccessExpression(
                                 factory.createIdentifier("args"),
-                                factory.createIdentifier(argName(i, param.column))
+                                factory.createIdentifier(
+                                  argName(i, param.column)
+                                )
                               )
                             ),
                             false
@@ -520,7 +526,7 @@ export function oneDecl(
                       factory.createIdentifier("values")
                     ),
                     undefined,
-                    undefined,
+                    undefined
                   )
                 )
               ),
@@ -550,12 +556,31 @@ export function oneDecl(
         ),
         factory.createVariableStatement(
           undefined,
-          factory.createVariableDeclarationList([
-            factory.createVariableDeclaration("row", undefined, undefined, factory.createElementAccessExpression(
-              factory.createIdentifier("rows"),
-              factory.createNumericLiteral("0")
-            )),
-          ], NodeFlags.Const)
+          factory.createVariableDeclarationList(
+            [
+              factory.createVariableDeclaration(
+                "row",
+                undefined,
+                undefined,
+                factory.createElementAccessExpression(
+                  factory.createIdentifier("rows"),
+                  factory.createNumericLiteral("0")
+                )
+              ),
+            ],
+            NodeFlags.Const
+          )
+        ),
+        factory.createIfStatement(
+          factory.createPrefixUnaryExpression(
+            SyntaxKind.ExclamationToken,
+            factory.createIdentifier("row")
+          ),
+          factory.createBlock(
+            [factory.createReturnStatement(factory.createNull())],
+            true
+          ),
+          undefined
         ),
         factory.createReturnStatement(
           factory.createObjectLiteralExpression(

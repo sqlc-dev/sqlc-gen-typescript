@@ -31,7 +31,7 @@ import { argName, colName } from "./drivers/utlis";
 import { Driver as Sqlite3Driver } from "./drivers/better-sqlite3";
 import { Driver as PgDriver } from "./drivers/pg";
 import { Driver as PostgresDriver } from "./drivers/postgres";
-import { Driver as MysqlDriver } from "./drivers/mysql2";
+import { Mysql2Options, Driver as MysqlDriver } from "./drivers/mysql2";
 
 // Read input from stdin
 const input = readInput();
@@ -43,6 +43,7 @@ writeOutput(result);
 interface Options {
   runtime?: string;
   driver?: string;
+  mysql2?: Mysql2Options
 }
 
 interface Driver {
@@ -78,10 +79,10 @@ interface Driver {
   ) => Node;
 }
 
-function createNodeGenerator(driver?: string): Driver {
-  switch (driver) {
+function createNodeGenerator(options: Options): Driver {
+  switch (options.driver) {
     case "mysql2": {
-      return new MysqlDriver();
+      return new MysqlDriver(options.mysql2);
     }
     case "pg": {
       return new PgDriver();
@@ -93,7 +94,7 @@ function createNodeGenerator(driver?: string): Driver {
       return new Sqlite3Driver();
     }
   }
-  throw new Error(`unknown driver: ${driver}`);
+  throw new Error(`unknown driver: ${options.driver}`);
 }
 
 function codegen(input: GenerateRequest): GenerateResponse {
@@ -105,7 +106,7 @@ function codegen(input: GenerateRequest): GenerateResponse {
     options = JSON.parse(text) as Options;
   }
 
-  const driver = createNodeGenerator(options.driver);
+  const driver = createNodeGenerator(options);
 
   // TODO: Verify options, parse them from protobuf honestly
 
@@ -146,17 +147,15 @@ ${query.text}`
         )
       );
 
-      const ctype = driver.columnType;
-
       let argIface = undefined;
       let returnIface = undefined;
       if (query.params.length > 0) {
         argIface = `${query.name}Args`;
-        nodes.push(argsDecl(argIface, ctype, query.params));
+        nodes.push(argsDecl(argIface, driver, query.params));
       }
       if (query.columns.length > 0) {
         returnIface = `${query.name}Row`;
-        nodes.push(rowDecl(returnIface, ctype, query.columns));
+        nodes.push(rowDecl(returnIface, driver, query.columns));
       }
 
       switch (query.cmd) {
@@ -240,7 +239,7 @@ function queryDecl(name: string, sql: string) {
 
 function argsDecl(
   name: string,
-  ctype: (c?: Column) => TypeNode,
+  driver: Driver,
   params: Parameter[]
 ) {
   return factory.createInterfaceDeclaration(
@@ -253,7 +252,7 @@ function argsDecl(
         undefined,
         factory.createIdentifier(argName(i, param.column)),
         undefined,
-        ctype(param.column)
+        driver.columnType(param.column)
       )
     )
   );
@@ -261,7 +260,7 @@ function argsDecl(
 
 function rowDecl(
   name: string,
-  ctype: (c?: Column) => TypeNode,
+  driver: Driver,
   columns: Column[]
 ) {
   return factory.createInterfaceDeclaration(
@@ -274,7 +273,7 @@ function rowDecl(
         undefined,
         factory.createIdentifier(colName(i, column)),
         undefined,
-        ctype(column)
+        driver.columnType(column)
       )
     )
   );

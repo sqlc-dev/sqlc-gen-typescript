@@ -22,6 +22,8 @@ async function main() {
     user: url.username,
     password: url.password,
     database: url.pathname.substring(1),
+    supportBigNumbers: true,
+    bigNumberStrings: true,
     ssl: {
       // TODO: FIXME
       rejectUnauthorized: false,

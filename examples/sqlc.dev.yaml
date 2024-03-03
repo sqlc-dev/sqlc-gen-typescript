@@ -49,6 +49,9 @@ sql:
     options:
       runtime: node
       driver: mysql2
+      mysql2:
+        big_number_strings: true
+        support_big_numbers: true
 - schema: "authors/mysql/schema.sql"
   queries: "authors/mysql/query.sql"
   engine: "mysql"

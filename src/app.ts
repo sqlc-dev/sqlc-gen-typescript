@@ -29,7 +29,7 @@ import {
 
 import { argName, colName } from "./drivers/utlis";
 import betterSQLite3 from "./drivers/better-sqlite3";
-import pg from "./drivers/pg";
+import { Driver as PgDriver } from "./drivers/pg";
 import postgres from "./drivers/postgres";
 import mysql2 from "./drivers/mysql2";
 
@@ -84,7 +84,7 @@ function createNodeGenerator(driver?: string): Driver {
       return mysql2;
     }
     case "pg": {
-      return pg;
+      return new PgDriver();
     }
     case "postgres": {
       return postgres;

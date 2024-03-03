@@ -30,7 +30,7 @@ import {
 import { argName, colName } from "./drivers/utlis";
 import betterSQLite3 from "./drivers/better-sqlite3";
 import { Driver as PgDriver } from "./drivers/pg";
-import postgres from "./drivers/postgres";
+import { Driver as PostgresDriver } from "./drivers/postgres";
 import mysql2 from "./drivers/mysql2";
 
 // Read input from stdin
@@ -87,7 +87,7 @@ function createNodeGenerator(driver?: string): Driver {
       return new PgDriver();
     }
     case "postgres": {
-      return postgres;
+      return new PostgresDriver();
     }
     case "better-sqlite3": {
       return betterSQLite3;
@@ -169,7 +169,7 @@ ${query.text}`
         case ":execlastid": {
           nodes.push(
             driver.execlastidDecl(lowerName, textName, argIface, query.params)
-          )
+          );
           break;
         }
         case ":one": {

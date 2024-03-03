@@ -28,6 +28,7 @@ sql:
 
 - PostgreSQL via [pg](https://www.npmjs.com/package/pg) or [postgres](https://www.npmjs.com/package/postgres).
 - MySQL via [mysql2](https://www.npmjs.com/package/mysql2).
+- SQLite via [sqlite3](https://www.npmjs.com/package/better-sqlite3).
 
 ## Getting started
 

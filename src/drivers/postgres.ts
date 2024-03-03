@@ -1,4 +1,4 @@
-import { SyntaxKind, NodeFlags, TypeNode, factory } from "typescript";
+import { SyntaxKind, NodeFlags, TypeNode, factory, FunctionDeclaration } from "typescript";
 
 import { Parameter, Column } from "../gen/plugin/codegen_pb";
 import { argName, colName } from "./utlis";
@@ -602,10 +602,20 @@ export function oneDecl(
   );
 }
 
+export function execlastidDecl(
+  funcName: string,
+  queryName: string,
+  argIface: string | undefined,
+  params: Parameter[]
+): FunctionDeclaration {
+  throw new Error('postgres driver does not support :execlastid')
+}
+
 export default {
   columnType,
   preamble,
   execDecl,
   manyDecl,
   oneDecl,
+  execlastidDecl
 };

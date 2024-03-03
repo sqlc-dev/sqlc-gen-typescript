@@ -84,10 +84,10 @@ function createNodeGenerator(driver?: string): Driver {
       return mysql2;
     }
     case "pg": {
-      return pg as any;
+      return pg;
     }
     case "postgres": {
-      return postgres as any;
+      return postgres;
     }
     case "better-sqlite3": {
       return betterSQLite3;

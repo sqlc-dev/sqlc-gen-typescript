@@ -1,4 +1,4 @@
-import { SyntaxKind, NodeFlags, Node, TypeNode, factory } from "typescript";
+import { SyntaxKind, NodeFlags, Node, TypeNode, factory, FunctionDeclaration } from "typescript";
 
 import { Parameter, Column, Query } from "../gen/plugin/codegen_pb";
 import { argName, colName } from "./utlis";
@@ -778,10 +778,20 @@ export function manyDecl(
   );
 }
 
+export function execlastidDecl(
+  funcName: string,
+  queryName: string,
+  argIface: string | undefined,
+  params: Parameter[]
+): FunctionDeclaration {
+  throw new Error('pg driver does not support :execlastid')
+}
+
 export default {
   columnType,
   execDecl,
   manyDecl,
   oneDecl,
   preamble,
+  execlastidDecl,
 };

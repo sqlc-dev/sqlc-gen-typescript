@@ -1,13 +1,38 @@
 name: examples
 on: [push]
 jobs:
-  bun:
+  bun-mysql:
     runs-on: ubuntu-latest
     strategy:
       matrix:
         include:
           - dir: "examples/bun-mysql2"
             qs: "mysql"
+    steps:
+    - uses: actions/checkout@v4
+    - uses: sqlc-dev/setup-sqlc@v4
+      with:
+        sqlc-version: '1.24.0'
+    - uses: oven-sh/setup-bun@v1
+      with:
+        bun-version: latest
+    - uses: shogo82148/actions-setup-mysql@v1
+      with:
+        mysql-version: "8.1"
+    - run: bun install
+      working-directory: ${{ matrix.dir }}
+    - run: mysql --user="root" --database="mysql" < schema.sql
+      working-directory: examples/authors/mysql
+    - run: bun run src/main.ts
+      working-directory: ${{ matrix.dir }}
+      env:
+        DATABASE_URL: mysql://root:@localhost:3306/mysql
+
+  bun-postgresql:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
           - dir: "examples/bun-postgres"
             qs: "postgresql"
           - dir: "examples/bun-pg"
@@ -20,21 +45,53 @@ jobs:
     - uses: oven-sh/setup-bun@v1
       with:
         bun-version: latest
+    - uses: sqlc-dev/action-setup-postgres@master
+      with:
+        postgres-version: "16"
+      id: postgres
     - run: bun install
       working-directory: ${{ matrix.dir }}
-    - run: echo "DATABASE_URL=$(sqlc createdb --queryset ${{ matrix.qs }})" >> $GITHUB_ENV
-      working-directory: examples/authors
+    - run: psql -f schema.sql "$DATABASE_URL"
+      working-directory: examples/authors/postgresql
       env:
-        SQLC_AUTH_TOKEN: ${{ secrets.SQLC_AUTH_TOKEN }}
+        DATABASE_URL: ${{ steps.postgres.outputs.connection-uri }}?sslmode=disable
     - run: bun run src/main.ts
       working-directory: ${{ matrix.dir }}
-  node:
+      env:
+        DATABASE_URL: ${{ steps.postgres.outputs.connection-uri }}?sslmode=disable
+
+  node-mysql:
     runs-on: ubuntu-latest
     strategy:
       matrix:
         include:
           - dir: "examples/node-mysql2"
             qs: "mysql"
+    steps:
+    - uses: actions/checkout@v4
+    - uses: sqlc-dev/setup-sqlc@v4
+      with:
+        sqlc-version: '1.24.0'
+    - uses: actions/setup-node@v4
+    - uses: shogo82148/actions-setup-mysql@v1
+      with:
+        mysql-version: "8.1"
+    - run: npm install
+      working-directory: ${{ matrix.dir }}
+    - run: npx tsc
+      working-directory: ${{ matrix.dir }}
+    - run: mysql --user="root" --database="mysql" < schema.sql
+      working-directory: examples/authors/mysql
+    - run: node ./src/main.js
+      working-directory: ${{ matrix.dir }}
+      env:
+        DATABASE_URL: mysql://root:@localhost:3306/mysql
+
+  node-postgresql:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
           - dir: "examples/node-postgres"
             qs: "postgresql"
           - dir: "examples/node-pg"
@@ -45,13 +102,19 @@ jobs:
       with:
         sqlc-version: '1.24.0'
     - uses: actions/setup-node@v4
+    - uses: sqlc-dev/action-setup-postgres@master
+      with:
+        postgres-version: "16"
+      id: postgres
     - run: npm install
       working-directory: ${{ matrix.dir }}
     - run: npx tsc
       working-directory: ${{ matrix.dir }}
-    - run: echo "DATABASE_URL=$(sqlc createdb --queryset ${{ matrix.qs }})" >> $GITHUB_ENV
-      working-directory: examples/authors
+    - run: psql -f schema.sql "$DATABASE_URL"
+      working-directory: examples/authors/postgresql
       env:
-        SQLC_AUTH_TOKEN: ${{ secrets.SQLC_AUTH_TOKEN }}
+        DATABASE_URL: ${{ steps.postgres.outputs.connection-uri }}?sslmode=disable
     - run: node ./src/main.js
       working-directory: ${{ matrix.dir }}
+      env:
+        DATABASE_URL: ${{ steps.postgres.outputs.connection-uri }}?sslmode=disable

@@ -1,5 +1,9 @@
 name: examples
-on: [push]
+on:
+  push:
+    branches:
+      - main
+  pull_request:
 jobs:
   bun-mysql:
     runs-on: ubuntu-latest

@@ -85,7 +85,7 @@ jobs:
     - run: node ./src/main.js
       working-directory: ${{ matrix.dir }}
       env:
-        DATABASE_URL: root:@localhost:3306/mysql
+        DATABASE_URL: root@localhost:3306/mysql
 
   node-postgresql:
     runs-on: ubuntu-latest

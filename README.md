@@ -304,7 +304,7 @@ plugins:
 sql:
 - schema: "schema.sql"
   queries: "query.sql"
-  engine: postgresql
+  engine: "mysql"
   codegen:
   - out: db
     plugin: ts

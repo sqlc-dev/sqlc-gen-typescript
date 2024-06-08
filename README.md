@@ -29,6 +29,7 @@ sql:
 - PostgreSQL via [pg](https://www.npmjs.com/package/pg) or [postgres](https://www.npmjs.com/package/postgres).
 - MySQL via [mysql2](https://www.npmjs.com/package/mysql2).
 - SQLite via [sqlite3](https://www.npmjs.com/package/better-sqlite3).
+- SQLite fork Turso via [@libsql/client](https://www.npmjs.com/package/@libsql/client).
 
 ## Getting started
 
@@ -332,4 +333,24 @@ sql:
     options:
       runtime: node
       driver: better-sqlite3 # npm package name
+
+### Turso SQLite and @libsql/client (Beta)
+
+```yaml
+version: '2'
+plugins:
+- name: ts
+  wasm:
+    url: https://downloads.sqlc.dev/plugin/sqlc-gen-typescript_0.1.4.wasm
+    sha256: 96fd05db0dc835ffd005b9f571fa5fa6d6cbd5a74e653ca34c2920c1b5d06249
+sql:
+- schema: "schema.sql"
+  queries: "query.sql"
+  engine: sqlite
+  codegen:
+  - out: db
+    plugin: ts
+    options:
+      runtime: node
+      driver: turso
 ```

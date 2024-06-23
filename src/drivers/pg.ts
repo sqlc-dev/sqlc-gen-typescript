@@ -1,13 +1,14 @@
-import {
+import ts, {
   SyntaxKind,
   NodeFlags,
   Node,
   TypeNode,
   factory,
   FunctionDeclaration,
+  isUnionTypeNode,
 } from "typescript";
 
-import { Parameter, Column, Query } from "../gen/plugin/codegen_pb";
+import { Parameter, Column, Query, Catalog, Enum } from "../gen/plugin/codegen_pb";
 import { argName, colName } from "./utlis";
 
 function funcParamsDecl(iface: string | undefined, params: Parameter[]) {
@@ -44,8 +45,26 @@ function funcParamsDecl(iface: string | undefined, params: Parameter[]) {
   return funcParams;
 }
 
+function findEnum(column: Column, catalog?: Catalog): Enum | undefined {
+  if(!catalog?.schemas) {
+    return;
+  }
+
+  for(const schema of catalog.schemas) {
+    for(const enumType of schema.enums) {
+      if (enumType.name === column.type?.name) {
+        return enumType;
+      }
+    }
+  };
+}
+
+function enumToUnionNode (enumType: Enum) {
+  return factory.createUnionTypeNode(enumType.vals.map((val) => factory.createLiteralTypeNode(factory.createStringLiteral(val))));
+}
+
 export class Driver {
-  columnType(column?: Column): TypeNode {
+  columnType(column?: Column, catalog?: Catalog): TypeNode {
     if (column === undefined || column.type === undefined) {
       return factory.createKeywordTypeNode(SyntaxKind.AnyKeyword);
     }
@@ -319,6 +338,13 @@ export class Driver {
         // string
         break;
       }
+      default: {
+        const enumType = findEnum(column, catalog);
+
+        if(enumType) {
+          typ = enumToUnionNode(enumType);
+        }
+      }
     }
     if (column.isArray || column.arrayDims > 0) {
       let dims = Math.max(column.arrayDims || 1);
@@ -329,7 +355,10 @@ export class Driver {
     if (column.notNull) {
       return typ;
     }
-    return factory.createUnionTypeNode([
+    return isUnionTypeNode(typ) ?  factory.createUnionTypeNode([
+      ...typ.types,
+      factory.createLiteralTypeNode(factory.createNull()),
+    ]) : factory.createUnionTypeNode([
       typ,
       factory.createLiteralTypeNode(factory.createNull()),
     ]);

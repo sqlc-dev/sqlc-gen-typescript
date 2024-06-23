@@ -7,7 +7,7 @@ interface Client {
 }
 
 export const getAuthorQuery = `-- name: GetAuthor :one
-SELECT id, name, bio FROM authors
+SELECT id, name, bio, role FROM authors
 WHERE id = $1 LIMIT 1`;
 
 export interface GetAuthorArgs {
@@ -18,6 +18,7 @@ export interface GetAuthorRow {
     id: string;
     name: string;
     bio: string | null;
+    role: "admin" | "guest" | null;
 }
 
 export async function getAuthor(client: Client, args: GetAuthorArgs): Promise<GetAuthorRow | null> {
@@ -33,18 +34,20 @@ export async function getAuthor(client: Client, args: GetAuthorArgs): Promise<Ge
     return {
         id: row[0],
         name: row[1],
-        bio: row[2]
+        bio: row[2],
+        role: row[3]
     };
 }
 
 export const listAuthorsQuery = `-- name: ListAuthors :many
-SELECT id, name, bio FROM authors
+SELECT id, name, bio, role FROM authors
 ORDER BY name`;
 
 export interface ListAuthorsRow {
     id: string;
     name: string;
     bio: string | null;
+    role: "admin" | "guest" | null;
 }
 
 export async function listAuthors(client: Client): Promise<ListAuthorsRow[]> {
@@ -57,7 +60,8 @@ export async function listAuthors(client: Client): Promise<ListAuthorsRow[]> {
         return {
             id: row[0],
             name: row[1],
-            bio: row[2]
+            bio: row[2],
+            role: row[3]
         };
     });
 }
@@ -68,7 +72,7 @@ INSERT INTO authors (
 ) VALUES (
   $1, $2
 )
-RETURNING id, name, bio`;
+RETURNING id, name, bio, role`;
 
 export interface CreateAuthorArgs {
     name: string;
@@ -79,6 +83,7 @@ export interface CreateAuthorRow {
     id: string;
     name: string;
     bio: string | null;
+    role: "admin" | "guest" | null;
 }
 
 export async function createAuthor(client: Client, args: CreateAuthorArgs): Promise<CreateAuthorRow | null> {
@@ -94,7 +99,8 @@ export async function createAuthor(client: Client, args: CreateAuthorArgs): Prom
     return {
         id: row[0],
         name: row[1],
-        bio: row[2]
+        bio: row[2],
+        role: row[3]
     };
 }
 

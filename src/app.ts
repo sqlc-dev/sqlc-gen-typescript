@@ -25,6 +25,7 @@ import {
   Column,
   File,
   Query,
+  Catalog,
 } from "./gen/plugin/codegen_pb";
 
 import { argName, colName } from "./drivers/utlis";
@@ -48,7 +49,7 @@ interface Options {
 
 interface Driver {
   preamble: (queries: Query[]) => Node[];
-  columnType: (c?: Column) => TypeNode;
+  columnType: (c?: Column, catalog?: Catalog) => TypeNode;
   execDecl: (
     name: string,
     text: string,
@@ -151,13 +152,13 @@ ${query.text}`
       let returnIface = undefined;
       if (query.params.length > 0) {
         argIface = `${query.name}Args`;
-        nodes.push(argsDecl(argIface, driver, query.params));
+        nodes.push(argsDecl(argIface, driver, query.params, input.catalog));
       }
       if (query.columns.length > 0) {
         returnIface = `${query.name}Row`;
-        nodes.push(rowDecl(returnIface, driver, query.columns));
+        nodes.push(rowDecl(returnIface, driver, query.columns, input.catalog));
       }
-
+ 
       switch (query.cmd) {
         case ":exec": {
           nodes.push(
@@ -240,7 +241,8 @@ function queryDecl(name: string, sql: string) {
 function argsDecl(
   name: string,
   driver: Driver,
-  params: Parameter[]
+  params: Parameter[],
+  catalog?: Catalog
 ) {
   return factory.createInterfaceDeclaration(
     [factory.createToken(SyntaxKind.ExportKeyword)],
@@ -252,7 +254,7 @@ function argsDecl(
         undefined,
         factory.createIdentifier(argName(i, param.column)),
         undefined,
-        driver.columnType(param.column)
+        driver.columnType(param.column, catalog)
       )
     )
   );
@@ -261,7 +263,8 @@ function argsDecl(
 function rowDecl(
   name: string,
   driver: Driver,
-  columns: Column[]
+  columns: Column[],
+  catalog?: Catalog
 ) {
   return factory.createInterfaceDeclaration(
     [factory.createToken(SyntaxKind.ExportKeyword)],
@@ -273,7 +276,7 @@ function rowDecl(
         undefined,
         factory.createIdentifier(colName(i, column)),
         undefined,
-        driver.columnType(column)
+        driver.columnType(column, catalog)
       )
     )
   );

@@ -4,8 +4,8 @@
 // @ts-expect-error
 import { readFileSync, writeFileSync, STDIO } from "javy/fs";
 import {
+  addSyntheticLeadingComment,
   EmitHint,
-  FunctionDeclaration,
   NewLineKind,
   TypeNode,
   ScriptKind,
@@ -161,38 +161,50 @@ ${query.text}`
       switch (query.cmd) {
         case ":exec": {
           nodes.push(
-            driver.execDecl(lowerName, textName, argIface, query.params)
+            withComment(
+              driver.execDecl(lowerName, textName, argIface, query.params),
+              query.comments
+            )
           );
           break;
         }
         case ":execlastid": {
           nodes.push(
-            driver.execlastidDecl(lowerName, textName, argIface, query.params)
+            withComment(
+              driver.execlastidDecl(lowerName, textName, argIface, query.params),
+              query.comments
+            )
           );
           break;
         }
         case ":one": {
           nodes.push(
-            driver.oneDecl(
-              lowerName,
-              textName,
-              argIface,
-              returnIface ?? "void",
-              query.params,
-              query.columns
+            withComment(
+              driver.oneDecl(
+                lowerName,
+                textName,
+                argIface,
+                returnIface ?? "void",
+                query.params,
+                query.columns
+              ),
+              query.comments
             )
           );
           break;
         }
         case ":many": {
           nodes.push(
-            driver.manyDecl(
-              lowerName,
-              textName,
-              argIface,
-              returnIface ?? "void",
-              query.params,
-              query.columns
+            withComment(
+              driver.manyDecl(
+                lowerName,
+                textName,
+                argIface,
+                returnIface ?? "void",
+                query.params,
+                query.columns
+              ),
+              query.comments,
             )
           );
           break;
@@ -277,6 +289,31 @@ function rowDecl(
       )
     )
   );
+}
+
+function withComment(node: Node, comments: string[]): Node {
+  if (comments.length === 0) return node;
+  const multilineCommentTerminator = /\*\//g;
+  addSyntheticLeadingComment(
+    node,
+    SyntaxKind.MultiLineCommentTrivia,
+    (
+      "*\n" +
+      comments.map((line) => {
+        if (line.startsWith("/")) {
+          // Escape leading `*/`
+          line = `\\${line}`;
+        }
+        // Escape `*/` in the middle
+        line = line.replace(multilineCommentTerminator, "*\\/");
+
+        return ` *${line}`;
+      }).join("\n") +
+      "\n "
+    ),
+    true,
+  );
+  return node;
 }
 
 function printNode(nodes: Node[]): string {

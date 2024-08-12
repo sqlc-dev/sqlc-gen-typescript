@@ -69,6 +69,11 @@ export interface CreateAuthorRow {
     bio: string | null;
 }
 
+/**
+ * Create a new author.
+ * This is the second line.*\/
+ *\/This is the third line.
+ */
 export async function createAuthor(sql: Sql, args: CreateAuthorArgs): Promise<CreateAuthorRow | null> {
     const rows = await sql.unsafe(createAuthorQuery, [args.name, args.bio]).values();
     if (rows.length !== 1) {

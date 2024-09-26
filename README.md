@@ -352,13 +352,13 @@ If you want to build and test sqlc-gen-typescript locally, follow these steps:
    npm install
    ```
 
-4. Build the WASM plugin:
+4. Build the WASM plugin:  
+Check the `Makefile` for details.
    ```
-   npx tsc --noEmit
-   npx esbuild --bundle src/app.ts --tree-shaking=true --format=esm --target=es2020 --outfile=out.js
+   make out.js
 
    # Ensure you have Javy installed and available in your PATH
-   javy compile out.js -o examples/plugin.wasm
+   make examples/plugin.wasm
    ```
 
 5. To test your local build, create a test project with a `sqlc.yaml` file containing:
@@ -368,7 +368,7 @@ If you want to build and test sqlc-gen-typescript locally, follow these steps:
    plugins:
    - name: ts
      wasm:
-       url: file:///{path_to_your_local_wasm_file}
+       url: file://{path_to_your_local_wasm_file}
        sha256: {sha256_of_your_wasm_file}
    sql:
    - schema: "schema.sql"

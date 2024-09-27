@@ -209,3 +209,27 @@ export async function test(client: Client): Promise<TestRow | null> {
     };
 }
 
+export const getReservedWordsQuery = `-- name: GetReservedWords :many
+SELECT \`id\`, \`key\`, \`value\` FROM reserved_words`;
+
+export interface GetReservedWordsRow {
+    id: number;
+    key: string | null;
+    value: string | null;
+}
+
+export async function getReservedWords(client: Client): Promise<GetReservedWordsRow[]> {
+    const [rows] = await client.query<RowDataPacket[]>({
+        sql: getReservedWordsQuery,
+        values: [],
+        rowsAsArray: true
+    });
+    return rows.map(row => {
+        return {
+            id: row[0],
+            key: row[1],
+            value: row[2]
+        };
+    });
+}
+

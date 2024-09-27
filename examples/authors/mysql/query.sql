@@ -27,3 +27,6 @@ WHERE id = ?;
 /* name: Test :one */
 SELECT * FROM node_mysql_types
 LIMIT 1;
+
+/* name: GetReservedWords :many */
+SELECT `id`, `key`, `value` FROM reserved_words;

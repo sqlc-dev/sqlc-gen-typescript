@@ -388,3 +388,6 @@ Check the `Makefile` for details.
    ```
    sqlc generate
    ```
+
+For more details on sqlc development, refer to the sqlc core development guide. This guide provides additional information on setting up and working with sqlc in general, which may be useful for contributors to this project.  
+https://docs.sqlc.dev/en/latest/guides/development.html

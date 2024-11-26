@@ -50,3 +50,10 @@ CREATE TABLE node_mysql_types (
 
   c_json JSON
 );
+
+/* https://dev.mysql.com/doc/refman/8.4/en/keywords.html#keywords-8-4-detailed-I */
+CREATE TABLE reserved_words (
+  `id` BIGINT PRIMARY KEY AUTO_INCREMENT,
+  `key` TEXT,
+  `value` TEXT
+);

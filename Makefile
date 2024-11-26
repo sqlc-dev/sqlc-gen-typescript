@@ -1,7 +1,7 @@
 .PHONY: generate
 
 generate: examples/plugin.wasm examples/sqlc.dev.yaml
-	cd examples && sqlc-dev -f sqlc.dev.yaml generate
+	cd examples && sqlc -f sqlc.dev.yaml generate
 
 # https://github.com/bytecodealliance/javy/releases/tag/v1.2.0
 examples/plugin.wasm: out.js

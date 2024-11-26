@@ -45,10 +45,10 @@ function funcParamsDecl(iface: string | undefined, params: Parameter[]) {
 }
 
 export class Driver {
-  private readonly options: Mysql2Options
+  private readonly options: Mysql2Options;
 
   constructor(options?: Mysql2Options) {
-    this.options = options ?? {}
+    this.options = options ?? {};
   }
 
   columnType(column?: Column): TypeNode {
@@ -63,12 +63,12 @@ export class Driver {
 
         if (this.options.support_big_numbers) {
           if (this.options.big_number_strings) {
-            typ = factory.createKeywordTypeNode(SyntaxKind.StringKeyword)
+            typ = factory.createKeywordTypeNode(SyntaxKind.StringKeyword);
           } else {
             typ = factory.createUnionTypeNode([
               factory.createKeywordTypeNode(SyntaxKind.NumberKeyword),
-              factory.createKeywordTypeNode(SyntaxKind.StringKeyword)
-            ])
+              factory.createKeywordTypeNode(SyntaxKind.StringKeyword),
+            ]);
           }
         }
 
@@ -655,6 +655,14 @@ export class Driver {
   ) {
     const funcParams = funcParamsDecl(argIface, params);
 
+    let returnType: TypeNode = factory.createTypeReferenceNode("number", undefined);
+    if (this.options.support_big_numbers) {
+      returnType = factory.createUnionTypeNode([
+        factory.createTypeReferenceNode("number", undefined),
+        factory.createTypeReferenceNode("string", undefined),
+      ]);
+    }
+
     return factory.createFunctionDeclaration(
       [
         factory.createToken(SyntaxKind.ExportKeyword),
@@ -665,7 +673,7 @@ export class Driver {
       undefined,
       funcParams,
       factory.createTypeReferenceNode(factory.createIdentifier("Promise"), [
-        factory.createTypeReferenceNode("number", undefined),
+        returnType,
       ]),
       factory.createBlock(
         [

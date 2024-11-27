@@ -7,6 +7,7 @@ SELECT * FROM authors
 ORDER BY name;
 
 /* name: CreateAuthor :exec */
+/* Create a new author. */
 INSERT INTO authors (
   name, bio
 ) VALUES (

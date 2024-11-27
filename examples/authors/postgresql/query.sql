@@ -7,6 +7,9 @@ SELECT * FROM authors
 ORDER BY name;
 
 -- name: CreateAuthor :one
+-- Create a new author.
+-- This is the second line.*/
+--/This is the third line.
 INSERT INTO authors (
   name, bio
 ) VALUES (

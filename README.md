@@ -57,7 +57,7 @@ Initialize a new package.
 $ bun init
 ```
 
-sqlc looks for either a `sqlc.(yaml|yml)` or `sqlc.json` file in the current
+sqlc looks for either a `sqlc.yaml`, `sqlc.yml` or `sqlc.json` file in the current
 directory. In our new directory, create a file named `sqlc.yaml` with the
 following contents:
 

@@ -69,6 +69,11 @@ export class Driver {
         typ = factory.createKeywordTypeNode(SyntaxKind.NumberKeyword);
         break;
       }
+      case "varchar":
+      case "text": {
+        typ = factory.createKeywordTypeNode(SyntaxKind.StringKeyword);
+        break;
+      }
       case "blob": {
         // TODO: Is this correct or node-specific?
         typ = factory.createTypeReferenceNode(
@@ -84,18 +89,15 @@ export class Driver {
         typ = factory.createKeywordTypeNode(SyntaxKind.NumberKeyword);
         break;
       }
-      case "boolean":
-      case "bool": {
-        typ = factory.createKeywordTypeNode(SyntaxKind.BooleanKeyword);
+      case "date":
+      case "datetime": {
+        typ = factory.createKeywordTypeNode(SyntaxKind.StringKeyword);
         break;
       }
-      case "date":
-      case "datetime":
+      case "boolean":
+      case "bool":
       case "timestamp": {
-        typ = factory.createTypeReferenceNode(
-          factory.createIdentifier("Date"),
-          undefined
-        );
+        typ = factory.createKeywordTypeNode(SyntaxKind.NumberKeyword);
         break;
       }
     }

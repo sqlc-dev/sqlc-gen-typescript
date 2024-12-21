@@ -6,7 +6,7 @@ interface Client {
     query: (config: QueryArrayConfig) => Promise<QueryArrayResult>;
 }
 
-export const getAuthorQuery = `-- name: GetAuthor :one
+const getAuthorQuery = `-- name: GetAuthor :one
 SELECT id, name, bio FROM authors
 WHERE id = $1 LIMIT 1`;
 
@@ -37,7 +37,7 @@ export async function getAuthor(client: Client, args: GetAuthorArgs): Promise<Ge
     };
 }
 
-export const listAuthorsQuery = `-- name: ListAuthors :many
+const listAuthorsQuery = `-- name: ListAuthors :many
 SELECT id, name, bio FROM authors
 ORDER BY name`;
 
@@ -62,7 +62,7 @@ export async function listAuthors(client: Client): Promise<ListAuthorsRow[]> {
     });
 }
 
-export const createAuthorQuery = `-- name: CreateAuthor :one
+const createAuthorQuery = `-- name: CreateAuthor :one
 INSERT INTO authors (
   name, bio
 ) VALUES (
@@ -98,7 +98,7 @@ export async function createAuthor(client: Client, args: CreateAuthorArgs): Prom
     };
 }
 
-export const deleteAuthorQuery = `-- name: DeleteAuthor :exec
+const deleteAuthorQuery = `-- name: DeleteAuthor :exec
 DELETE FROM authors
 WHERE id = $1`;
 

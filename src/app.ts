@@ -5,7 +5,6 @@
 import { readFileSync, writeFileSync, STDIO } from "javy/fs";
 import {
   EmitHint,
-  FunctionDeclaration,
   NewLineKind,
   TypeNode,
   ScriptKind,
@@ -222,7 +221,7 @@ function readInput(): GenerateRequest {
 
 function queryDecl(name: string, sql: string) {
   return factory.createVariableStatement(
-    [factory.createToken(SyntaxKind.ExportKeyword)],
+    [],
     factory.createVariableDeclarationList(
       [
         factory.createVariableDeclaration(

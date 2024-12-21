@@ -2,7 +2,7 @@
 
 import { Sql } from "postgres";
 
-export const getAuthorQuery = `-- name: GetAuthor :one
+const getAuthorQuery = `-- name: GetAuthor :one
 SELECT id, name, bio FROM authors
 WHERE id = $1 LIMIT 1`;
 
@@ -32,7 +32,7 @@ export async function getAuthor(sql: Sql, args: GetAuthorArgs): Promise<GetAutho
     };
 }
 
-export const listAuthorsQuery = `-- name: ListAuthors :many
+const listAuthorsQuery = `-- name: ListAuthors :many
 SELECT id, name, bio FROM authors
 ORDER BY name`;
 
@@ -50,7 +50,7 @@ export async function listAuthors(sql: Sql): Promise<ListAuthorsRow[]> {
     }));
 }
 
-export const createAuthorQuery = `-- name: CreateAuthor :one
+const createAuthorQuery = `-- name: CreateAuthor :one
 INSERT INTO authors (
   name, bio
 ) VALUES (
@@ -85,7 +85,7 @@ export async function createAuthor(sql: Sql, args: CreateAuthorArgs): Promise<Cr
     };
 }
 
-export const deleteAuthorQuery = `-- name: DeleteAuthor :exec
+const deleteAuthorQuery = `-- name: DeleteAuthor :exec
 DELETE FROM authors
 WHERE id = $1`;
 

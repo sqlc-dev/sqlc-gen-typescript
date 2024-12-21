@@ -4,7 +4,7 @@ import mysql, { RowDataPacket, ResultSetHeader } from "mysql2/promise";
 
 type Client = mysql.Connection | mysql.Pool;
 
-export const getAuthorQuery = `-- name: GetAuthor :one
+const getAuthorQuery = `-- name: GetAuthor :one
 SELECT id, name, bio FROM authors
 WHERE id = ? LIMIT 1`;
 
@@ -35,7 +35,7 @@ export async function getAuthor(client: Client, args: GetAuthorArgs): Promise<Ge
     };
 }
 
-export const listAuthorsQuery = `-- name: ListAuthors :many
+const listAuthorsQuery = `-- name: ListAuthors :many
 SELECT id, name, bio FROM authors
 ORDER BY name`;
 
@@ -60,7 +60,7 @@ export async function listAuthors(client: Client): Promise<ListAuthorsRow[]> {
     });
 }
 
-export const createAuthorQuery = `-- name: CreateAuthor :exec
+const createAuthorQuery = `-- name: CreateAuthor :exec
 INSERT INTO authors (
   name, bio
 ) VALUES (
@@ -79,7 +79,7 @@ export async function createAuthor(client: Client, args: CreateAuthorArgs): Prom
     });
 }
 
-export const createAuthorReturnIdQuery = `-- name: CreateAuthorReturnId :execlastid
+const createAuthorReturnIdQuery = `-- name: CreateAuthorReturnId :execlastid
 INSERT INTO authors (
   name, bio
 ) VALUES (
@@ -99,7 +99,7 @@ export async function createAuthorReturnId(client: Client, args: CreateAuthorRet
     return result?.insertId ?? 0;
 }
 
-export const deleteAuthorQuery = `-- name: DeleteAuthor :exec
+const deleteAuthorQuery = `-- name: DeleteAuthor :exec
 DELETE FROM authors
 WHERE id = ?`;
 
@@ -114,7 +114,7 @@ export async function deleteAuthor(client: Client, args: DeleteAuthorArgs): Prom
     });
 }
 
-export const testQuery = `-- name: Test :one
+const testQuery = `-- name: Test :one
 SELECT c_bit, c_tinyint, c_bool, c_boolean, c_smallint, c_mediumint, c_int, c_integer, c_bigint, c_serial, c_decimal, c_dec, c_numeric, c_fixed, c_float, c_double, c_double_precision, c_date, c_time, c_datetime, c_timestamp, c_year, c_char, c_nchar, c_national_char, c_varchar, c_binary, c_varbinary, c_tinyblob, c_tinytext, c_blob, c_text, c_mediumblob, c_mediumtext, c_longblob, c_longtext, c_json FROM node_mysql_types
 LIMIT 1`;
 

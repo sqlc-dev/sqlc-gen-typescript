@@ -2,7 +2,7 @@
 
 import { Database } from "better-sqlite3";
 
-export const getAuthorQuery = `-- name: GetAuthor :one
+const getAuthorQuery = `-- name: GetAuthor :one
 SELECT id, name, bio FROM authors
 WHERE id = ? LIMIT 1`;
 
@@ -25,7 +25,7 @@ export async function getAuthor(database: Database, args: GetAuthorArgs): Promis
     return result as GetAuthorRow;
 }
 
-export const listAuthorsQuery = `-- name: ListAuthors :many
+const listAuthorsQuery = `-- name: ListAuthors :many
 SELECT id, name, bio FROM authors
 ORDER BY name`;
 
@@ -41,7 +41,7 @@ export async function listAuthors(database: Database): Promise<ListAuthorsRow[]>
     return result as ListAuthorsRow[];
 }
 
-export const createAuthorQuery = `-- name: CreateAuthor :exec
+const createAuthorQuery = `-- name: CreateAuthor :exec
 INSERT INTO authors (
   name, bio
 ) VALUES (
@@ -58,7 +58,7 @@ export async function createAuthor(database: Database, args: CreateAuthorArgs): 
     await stmt.run(args.name, args.bio);
 }
 
-export const deleteAuthorQuery = `-- name: DeleteAuthor :exec
+const deleteAuthorQuery = `-- name: DeleteAuthor :exec
 DELETE FROM authors
 WHERE id = ?`;
 

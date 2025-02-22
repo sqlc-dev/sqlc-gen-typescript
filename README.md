@@ -299,7 +299,7 @@ plugins:
 - name: ts
   wasm:
     url: https://downloads.sqlc.dev/plugin/sqlc-gen-typescript_0.1.4.wasm
-    sha256: e8628d800e9c48197e8cbbe289c74839f869cb282b2717ffc85eb622e81a036c
+    sha256: 9b2f4eca095a3ba1f0f5e971e371ae52f991396efdb63728fc3e8df92c31ff5f
 sql:
 - schema: "schema.sql"
   queries: "query.sql"
@@ -352,6 +352,27 @@ sql:
     options:
       runtime: node
       driver: better-sqlite3 # npm package name
+```
+
+### SQLite and Bun SQLite
+
+```yaml
+version: '2'
+plugins:
+- name: ts
+  wasm:
+    url: https://downloads.sqlc.dev/plugin/sqlc-gen-typescript_0.1.4.wasm
+    sha256: 9b2f4eca095a3ba1f0f5e971e371ae52f991396efdb63728fc3e8df92c31ff5f
+sql:
+- schema: "schema.sql"
+  queries: "query.sql"
+  engine: sqlite
+  codegen:
+  - out: db
+    plugin: ts
+    options:
+      runtime: bun
+      driver: bun-sqlite # to use native SQLite library of Bun
 ```
 
 ## Development

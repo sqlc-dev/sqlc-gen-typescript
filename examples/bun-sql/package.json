@@ -1,5 +1,5 @@
 {
-  "name": "bun-postgres",
+  "name": "bun-sql",
   "module": "src/main.ts",
   "type": "module",
   "devDependencies": {

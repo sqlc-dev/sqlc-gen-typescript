@@ -30,8 +30,9 @@ import { argName, colName } from "./drivers/utlis";
 import { Driver as Sqlite3Driver } from "./drivers/better-sqlite3";
 import { Driver as PgDriver } from "./drivers/pg";
 import { Driver as PostgresDriver } from "./drivers/postgres";
-import { Driver as BunSqlDriver } from "./drivers/bun-sql";
 import { Mysql2Options, Driver as MysqlDriver } from "./drivers/mysql2";
+import { Driver as BunSqlDriver } from "./drivers/bun-sql";
+import { Driver as BunSqliteDriver } from "./drivers/bun-sqlite";
 
 // Read input from stdin
 const input = readInput();
@@ -92,6 +93,9 @@ function createNodeGenerator(options: Options): Driver {
     }
     case "bun-sql": {
       return new BunSqlDriver();
+    }
+    case "bun-sqlite": {
+      return new BunSqliteDriver();
     }
     case "better-sqlite3": {
       return new Sqlite3Driver();

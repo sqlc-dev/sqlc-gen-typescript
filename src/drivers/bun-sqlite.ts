@@ -8,7 +8,7 @@ import {
 } from "typescript";
 
 import { Parameter, Column, Query } from "../gen/plugin/codegen_pb";
-import { argName } from "./utlis";
+import { argName, colName } from "./utlis";
 
 function funcParamsDecl(iface: string | undefined, params: Parameter[]) {
   let funcParams = [
@@ -253,13 +253,13 @@ export class Driver {
             factory.createVariableDeclarationList(
               [
                 factory.createVariableDeclaration(
-                  factory.createIdentifier("result"),
+                  factory.createIdentifier("rows"),
                   undefined,
                   undefined,
                   factory.createCallExpression(
                     factory.createPropertyAccessExpression(
                       factory.createIdentifier("stmt"),
-                      factory.createIdentifier("get")
+                      factory.createIdentifier("values")
                     ),
                     undefined,
                     params.map((param, i) =>
@@ -278,9 +278,40 @@ export class Driver {
           ),
           factory.createIfStatement(
             factory.createBinaryExpression(
-              factory.createIdentifier("result"),
-              factory.createToken(SyntaxKind.EqualsEqualsToken),
-              factory.createIdentifier("undefined")
+              factory.createPropertyAccessExpression(
+                factory.createIdentifier("rows"),
+                factory.createIdentifier("length")
+              ),
+              factory.createToken(SyntaxKind.ExclamationEqualsEqualsToken),
+              factory.createNumericLiteral("1")
+            ),
+            factory.createBlock(
+              [factory.createReturnStatement(factory.createNull())],
+              true
+            ),
+            undefined
+          ),
+          factory.createVariableStatement(
+            undefined,
+            factory.createVariableDeclarationList(
+              [
+                factory.createVariableDeclaration(
+                  "row",
+                  undefined,
+                  undefined,
+                  factory.createElementAccessExpression(
+                    factory.createIdentifier("rows"),
+                    factory.createNumericLiteral("0")
+                  )
+                ),
+              ],
+              NodeFlags.Const
+            )
+          ),
+          factory.createIfStatement(
+            factory.createPrefixUnaryExpression(
+              SyntaxKind.ExclamationToken,
+              factory.createIdentifier("row")
             ),
             factory.createBlock(
               [factory.createReturnStatement(factory.createNull())],
@@ -289,12 +320,17 @@ export class Driver {
             undefined
           ),
           factory.createReturnStatement(
-            factory.createAsExpression(
-              factory.createIdentifier("result"),
-              factory.createTypeReferenceNode(
-                factory.createIdentifier(returnIface),
-                undefined
-              )
+            factory.createObjectLiteralExpression(
+              columns.map((col, i) =>
+                factory.createPropertyAssignment(
+                  factory.createIdentifier(colName(i, col)),
+                  factory.createElementAccessExpression(
+                    factory.createIdentifier("row"),
+                    factory.createNumericLiteral(`${i}`)
+                  )
+                )
+              ),
+              true
             )
           ),
         ],
@@ -358,13 +394,13 @@ export class Driver {
             factory.createVariableDeclarationList(
               [
                 factory.createVariableDeclaration(
-                  factory.createIdentifier("result"),
+                  factory.createIdentifier("rows"),
                   undefined,
                   undefined,
                   factory.createCallExpression(
                     factory.createPropertyAccessExpression(
                       factory.createIdentifier("stmt"),
-                      factory.createIdentifier("all")
+                      factory.createIdentifier("values")
                     ),
                     undefined,
                     params.map((param, i) =>
@@ -382,14 +418,39 @@ export class Driver {
             )
           ),
           factory.createReturnStatement(
-            factory.createAsExpression(
-              factory.createIdentifier("result"),
-              factory.createArrayTypeNode(
-                factory.createTypeReferenceNode(
-                  factory.createIdentifier(returnIface),
-                  undefined
-                )
-              )
+            factory.createCallExpression(
+              factory.createPropertyAccessExpression(
+                factory.createIdentifier("rows"),
+                factory.createIdentifier("map")
+              ),
+              undefined,
+              [
+                factory.createArrowFunction(
+                  undefined,
+                  undefined,
+                  [
+                    factory.createParameterDeclaration(
+                      undefined,
+                      undefined,
+                      "row"
+                    ),
+                  ],
+                  undefined,
+                  factory.createToken(SyntaxKind.EqualsGreaterThanToken),
+                  factory.createObjectLiteralExpression(
+                    columns.map((col, i) =>
+                      factory.createPropertyAssignment(
+                        factory.createIdentifier(colName(i, col)),
+                        factory.createElementAccessExpression(
+                          factory.createIdentifier("row"),
+                          factory.createNumericLiteral(`${i}`)
+                        )
+                      )
+                    ),
+                    true
+                  )
+                ),
+              ]
             )
           ),
         ],

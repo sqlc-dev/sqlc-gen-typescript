@@ -18,11 +18,19 @@ export interface GetAuthorRow {
 
 export async function getAuthor(database: Database, args: GetAuthorArgs): Promise<GetAuthorRow | null> {
     const stmt = database.prepare(getAuthorQuery);
-    const result = stmt.get(args.id);
-    if (result == undefined) {
+    const rows = stmt.values(args.id);
+    if (rows.length !== 1) {
         return null;
     }
-    return result as GetAuthorRow;
+    const row = rows[0];
+    if (!row) {
+        return null;
+    }
+    return {
+        id: row[0],
+        name: row[1],
+        bio: row[2]
+    };
 }
 
 export const listAuthorsQuery = `-- name: ListAuthors :many
@@ -37,8 +45,12 @@ export interface ListAuthorsRow {
 
 export async function listAuthors(database: Database): Promise<ListAuthorsRow[]> {
     const stmt = database.prepare(listAuthorsQuery);
-    const result = stmt.all();
-    return result as ListAuthorsRow[];
+    const rows = stmt.values();
+    return rows.map(row => ({
+        id: row[0],
+        name: row[1],
+        bio: row[2]
+    }));
 }
 
 export const createAuthorQuery = `-- name: CreateAuthor :exec

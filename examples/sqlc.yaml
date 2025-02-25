@@ -3,7 +3,7 @@ plugins:
 - name: ts
   wasm:
     url: https://downloads.sqlc.dev/plugin/sqlc-gen-typescript_0.1.3.wasm
-    sha256: 7f07d09e446c15223e1046d9086c5d79cc56dc1b3314dc567d84eaa7ac16d8e6
+    sha256: 644e524071b493cc1f0d8687aaa0632171cee70f59355abc96221f51c479771d
 sql:
 - schema: "authors/postgresql/schema.sql"
   queries: "authors/postgresql/query.sql"

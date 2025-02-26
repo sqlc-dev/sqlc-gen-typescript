@@ -7,13 +7,13 @@ SELECT id, name, bio FROM authors
 WHERE id = ? LIMIT 1`;
 
 export interface GetAuthorArgs {
-    id: any;
+    id: number;
 }
 
 export interface GetAuthorRow {
-    id: any;
-    name: any;
-    bio: any | null;
+    id: number;
+    name: string;
+    bio: string | null;
 }
 
 export async function getAuthor(database: Database, args: GetAuthorArgs): Promise<GetAuthorRow | null> {
@@ -27,9 +27,9 @@ export async function getAuthor(database: Database, args: GetAuthorArgs): Promis
         return null;
     }
     return {
-        id: row[0],
-        name: row[1],
-        bio: row[2]
+        id: row[0] as number,
+        name: row[1] as string,
+        bio: row[2] as string | null
     };
 }
 
@@ -38,18 +38,18 @@ SELECT id, name, bio FROM authors
 ORDER BY name`;
 
 export interface ListAuthorsRow {
-    id: any;
-    name: any;
-    bio: any | null;
+    id: number;
+    name: string;
+    bio: string | null;
 }
 
 export async function listAuthors(database: Database): Promise<ListAuthorsRow[]> {
     const stmt = database.prepare(listAuthorsQuery);
     const rows = stmt.values();
     return rows.map(row => ({
-        id: row[0],
-        name: row[1],
-        bio: row[2]
+        id: row[0] as number,
+        name: row[1] as string,
+        bio: row[2] as string | null
     }));
 }
 
@@ -61,8 +61,8 @@ INSERT INTO authors (
 )`;
 
 export interface CreateAuthorArgs {
-    name: any;
-    bio: any | null;
+    name: string;
+    bio: string | null;
 }
 
 export async function createAuthor(database: Database, args: CreateAuthorArgs): Promise<void> {
@@ -75,7 +75,7 @@ DELETE FROM authors
 WHERE id = ?`;
 
 export interface DeleteAuthorArgs {
-    id: any;
+    id: number;
 }
 
 export async function deleteAuthor(database: Database, args: DeleteAuthorArgs): Promise<void> {

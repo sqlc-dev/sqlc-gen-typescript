@@ -45,17 +45,13 @@ function funcParamsDecl(iface: string | undefined, params: Parameter[]) {
 }
 
 export class Driver {
-  /**
-   * {@link https://github.com/WiseLibs/better-sqlite3/blob/v9.4.1/docs/api.md#binding-parameters}
-   * {@link https://github.com/sqlc-dev/sqlc/blob/v1.25.0/internal/codegen/golang/sqlite_type.go}
-   */
   columnType(column?: Column): TypeNode {
     if (column === undefined || column.type === undefined) {
       return factory.createKeywordTypeNode(SyntaxKind.AnyKeyword);
     }
 
     let typ: TypeNode = factory.createKeywordTypeNode(SyntaxKind.AnyKeyword);
-    switch (column.type.name) {
+    switch (column.type.name.toLowerCase()) {
       case "int":
       case "integer":
       case "tinyint":
@@ -69,8 +65,12 @@ export class Driver {
         typ = factory.createKeywordTypeNode(SyntaxKind.NumberKeyword);
         break;
       }
+      case "varchar":
+      case "text": {
+        typ = factory.createKeywordTypeNode(SyntaxKind.StringKeyword);
+        break;
+      }
       case "blob": {
-        // TODO: Is this correct or node-specific?
         typ = factory.createTypeReferenceNode(
           factory.createIdentifier("Buffer"),
           undefined
@@ -84,18 +84,15 @@ export class Driver {
         typ = factory.createKeywordTypeNode(SyntaxKind.NumberKeyword);
         break;
       }
-      case "boolean":
-      case "bool": {
-        typ = factory.createKeywordTypeNode(SyntaxKind.BooleanKeyword);
+      case "date":
+      case "datetime": {
+        typ = factory.createKeywordTypeNode(SyntaxKind.StringKeyword);
         break;
       }
-      case "date":
-      case "datetime":
+      case "boolean":
+      case "bool":
       case "timestamp": {
-        typ = factory.createTypeReferenceNode(
-          factory.createIdentifier("Date"),
-          undefined
-        );
+        typ = factory.createKeywordTypeNode(SyntaxKind.NumberKeyword);
         break;
       }
     }
@@ -110,7 +107,7 @@ export class Driver {
     ]);
   }
 
-  preamble(_queries: Query[]) {
+  preamble(queries: Query[]) {
     const imports: Node[] = [
       factory.createImportDeclaration(
         undefined,
@@ -324,9 +321,12 @@ export class Driver {
               columns.map((col, i) =>
                 factory.createPropertyAssignment(
                   factory.createIdentifier(colName(i, col)),
-                  factory.createElementAccessExpression(
-                    factory.createIdentifier("row"),
-                    factory.createNumericLiteral(`${i}`)
+                  factory.createAsExpression(
+                    factory.createElementAccessExpression(
+                      factory.createIdentifier("row"),
+                      factory.createNumericLiteral(`${i}`)
+                    ),
+                    this.columnType(col)
                   )
                 )
               ),
@@ -441,9 +441,12 @@ export class Driver {
                     columns.map((col, i) =>
                       factory.createPropertyAssignment(
                         factory.createIdentifier(colName(i, col)),
-                        factory.createElementAccessExpression(
-                          factory.createIdentifier("row"),
-                          factory.createNumericLiteral(`${i}`)
+                        factory.createAsExpression(
+                          factory.createElementAccessExpression(
+                            factory.createIdentifier("row"),
+                            factory.createNumericLiteral(`${i}`)
+                          ),
+                          this.columnType(col)
                         )
                       )
                     ),

@@ -26,7 +26,7 @@ sql:
 
 ## Supported engines and drivers
 
-- PostgreSQL via [pg](https://www.npmjs.com/package/pg) or [postgres](https://www.npmjs.com/package/postgres).
+- PostgreSQL via [pg](https://www.npmjs.com/package/pg), [postgres](https://www.npmjs.com/package/postgres) or [Bun SQL](https://bun.sh/docs/api/sql).
 - MySQL via [mysql2](https://www.npmjs.com/package/mysql2).
 - SQLite via [sqlite3](https://www.npmjs.com/package/better-sqlite3).
 
@@ -291,6 +291,26 @@ sql:
       driver: postgres # npm package name
 ```
 
+### PostgreSQL and Bun SQL
+
+```yaml
+version: '2'
+plugins:
+- name: ts
+  wasm:
+    url: https://downloads.sqlc.dev/plugin/sqlc-gen-typescript_0.1.4.wasm
+    sha256: 9b2f4eca095a3ba1f0f5e971e371ae52f991396efdb63728fc3e8df92c31ff5f
+sql:
+- schema: "schema.sql"
+  queries: "query.sql"
+  engine: postgresql
+  codegen:
+  - out: db
+    plugin: ts
+    options:
+      runtime: bun
+      driver: bun-sql # to use native SQL library of Bun 1.2
+```
 
 ### MySQL and mysql2
 
@@ -332,6 +352,27 @@ sql:
     options:
       runtime: node
       driver: better-sqlite3 # npm package name
+```
+
+### SQLite and Bun SQLite
+
+```yaml
+version: '2'
+plugins:
+- name: ts
+  wasm:
+    url: https://downloads.sqlc.dev/plugin/sqlc-gen-typescript_0.1.4.wasm
+    sha256: 9b2f4eca095a3ba1f0f5e971e371ae52f991396efdb63728fc3e8df92c31ff5f
+sql:
+- schema: "schema.sql"
+  queries: "query.sql"
+  engine: sqlite
+  codegen:
+  - out: db
+    plugin: ts
+    options:
+      runtime: bun
+      driver: bun-sqlite # to use native SQLite library of Bun
 ```
 
 ## Development

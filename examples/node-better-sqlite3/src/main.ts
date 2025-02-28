@@ -9,12 +9,6 @@ import {
   listAuthors,
 } from "./db/query_sql";
 
-interface Author {
-  id: string;
-  name: string;
-  bio: string | null;
-}
-
 async function main() {
   const ddl = await readFile(join(__dirname, "../../authors/sqlite/schema.sql"), { encoding: 'utf-8' });
   const database = new Database(":memory:");

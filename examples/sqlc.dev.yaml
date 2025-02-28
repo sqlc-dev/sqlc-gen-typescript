@@ -40,6 +40,15 @@ sql:
     options:
       runtime: bun
       driver: postgres
+- schema: "authors/postgresql/schema.sql"
+  queries: "authors/postgresql/query.sql"
+  engine: "postgresql"
+  codegen:
+  - plugin: ts
+    out: bun-sql/src/db
+    options:
+      runtime: bun
+      driver: bun-sql
 - schema: "authors/mysql/schema.sql"
   queries: "authors/mysql/query.sql"
   engine: "mysql"
@@ -70,3 +79,12 @@ sql:
     options:
       runtime: node
       driver: better-sqlite3
+- schema: "authors/sqlite/schema.sql"
+  queries: "authors/sqlite/query.sql"
+  engine: "sqlite"
+  codegen:
+  - plugin: ts
+    out: bun-sqlite/src/db
+    options:
+      runtime: bun
+      driver: bun-sqlite

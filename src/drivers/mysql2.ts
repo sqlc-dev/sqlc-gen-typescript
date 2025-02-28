@@ -1,7 +1,5 @@
 import { SyntaxKind, NodeFlags, TypeNode, factory } from "typescript";
 
-// import { writeFileSync, STDIO } from "javy/fs";
-
 import { Parameter, Column, Query } from "../gen/plugin/codegen_pb";
 import { argName, colName } from "./utlis";
 

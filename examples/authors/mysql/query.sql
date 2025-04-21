@@ -13,6 +13,13 @@ INSERT INTO authors (
   ?, ?
 );
 
+/* name: CreateAuthors :copyfrom */
+INSERT INTO authors (
+  name, bio
+) VALUES (
+  ?, ?
+);
+
 /* name: CreateAuthorReturnId :execlastid */
 INSERT INTO authors (
   name, bio

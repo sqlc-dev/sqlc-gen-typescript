@@ -149,7 +149,8 @@ function codegen(input: GenerateRequest): GenerateResponse {
         queryDecl(
           textName,
           `-- name: ${query.name} ${query.cmd}
-${query.text}`
+${query.text}`,
+          query.cmd === ":copyfrom"
         )
       );
 
@@ -232,7 +233,11 @@ function readInput(): GenerateRequest {
   return GenerateRequest.fromBinary(buffer);
 }
 
-function queryDecl(name: string, sql: string) {
+function queryDecl(name: string, sql: string, isCopyFrom = false) {
+  const modifiedSql = isCopyFrom 
+    ? sql.replace(/\(\s*\?(?:\s*,\s*\?)*\s*\)/g, "?")
+    : sql;
+  
   return factory.createVariableStatement(
     [factory.createToken(SyntaxKind.ExportKeyword)],
     factory.createVariableDeclarationList(
@@ -241,10 +246,10 @@ function queryDecl(name: string, sql: string) {
           factory.createIdentifier(name),
           undefined,
           undefined,
-          factory.createNoSubstitutionTemplateLiteral(sql, sql)
+          factory.createNoSubstitutionTemplateLiteral(modifiedSql, modifiedSql)
         ),
       ],
-      NodeFlags.Const //| NodeFlags.Constant | NodeFlags.Constant
+      NodeFlags.Const
     )
   );
 }

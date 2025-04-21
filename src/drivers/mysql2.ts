@@ -756,7 +756,34 @@ export class Driver {
     argIface: string | undefined,
     params: Parameter[]
   ) {
-    const funcParams = funcParamsDecl(argIface, params);
+    const funcParams = [
+      factory.createParameterDeclaration(
+        undefined,
+        undefined,
+        factory.createIdentifier("client"),
+        undefined,
+        factory.createTypeReferenceNode(
+          factory.createIdentifier("Client"),
+          undefined
+        ),
+        undefined
+      ),
+      factory.createParameterDeclaration(
+        undefined,
+        undefined,
+        factory.createIdentifier("args"),
+        undefined,
+        factory.createArrayTypeNode(
+          argIface
+            ? factory.createTypeReferenceNode(
+                factory.createIdentifier(argIface),
+                undefined
+              )
+            : factory.createTypeLiteralNode([])
+        ),
+        undefined
+      ),
+    ];
 
     return factory.createFunctionDeclaration(
       [
@@ -789,14 +816,39 @@ export class Driver {
                       ),
                       factory.createPropertyAssignment(
                         factory.createIdentifier("values"),
-                        factory.createArrayLiteralExpression(
-                          params.map((param, i) =>
-                            factory.createPropertyAccessExpression(
-                              factory.createIdentifier("args"),
-                              factory.createIdentifier(argName(i, param.column))
-                            )
+                        factory.createCallExpression(
+                          factory.createPropertyAccessExpression(
+                            factory.createIdentifier("args"),
+                            factory.createIdentifier("map")
                           ),
-                          false
+                          undefined,
+                          [
+                            factory.createArrowFunction(
+                              undefined,
+                              undefined,
+                              [
+                                factory.createParameterDeclaration(
+                                  undefined,
+                                  undefined,
+                                  factory.createIdentifier("arg"),
+                                  undefined,
+                                  undefined,
+                                  undefined
+                                ),
+                              ],
+                              undefined,
+                              factory.createToken(SyntaxKind.EqualsGreaterThanToken),
+                              factory.createArrayLiteralExpression(
+                                params.map((param, i) =>
+                                  factory.createPropertyAccessExpression(
+                                    factory.createIdentifier("arg"),
+                                    factory.createIdentifier(argName(i, param.column))
+                                  )
+                                ),
+                                false
+                              )
+                            ),
+                          ]
                         )
                       ),
                     ],

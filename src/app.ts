@@ -77,6 +77,12 @@ interface Driver {
     params: Parameter[],
     columns: Column[]
   ) => Node;
+  copyfromDecl: (
+    name: string,
+    text: string,
+    iface: string | undefined,
+    params: Parameter[]
+  ) => Node;
 }
 
 function createNodeGenerator(options: Options): Driver {
@@ -194,6 +200,12 @@ ${query.text}`
               query.params,
               query.columns
             )
+          );
+          break;
+        }
+        case ":copyfrom": {
+          nodes.push(
+            driver.copyfromDecl(lowerName, textName, argIface, query.params)
           );
           break;
         }

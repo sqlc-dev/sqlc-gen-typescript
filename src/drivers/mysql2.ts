@@ -749,4 +749,66 @@ export class Driver {
       )
     );
   }
+
+  copyfromDecl(
+    funcName: string,
+    queryName: string,
+    argIface: string | undefined,
+    params: Parameter[]
+  ) {
+    const funcParams = funcParamsDecl(argIface, params);
+
+    return factory.createFunctionDeclaration(
+      [
+        factory.createToken(SyntaxKind.ExportKeyword),
+        factory.createToken(SyntaxKind.AsyncKeyword),
+      ],
+      undefined,
+      factory.createIdentifier(funcName),
+      undefined,
+      funcParams,
+      factory.createTypeReferenceNode(factory.createIdentifier("Promise"), [
+        factory.createKeywordTypeNode(SyntaxKind.VoidKeyword),
+      ]),
+      factory.createBlock(
+        [
+          factory.createExpressionStatement(
+            factory.createAwaitExpression(
+              factory.createCallExpression(
+                factory.createPropertyAccessExpression(
+                  factory.createIdentifier("client"),
+                  factory.createIdentifier("query")
+                ),
+                undefined,
+                [
+                  factory.createObjectLiteralExpression(
+                    [
+                      factory.createPropertyAssignment(
+                        factory.createIdentifier("sql"),
+                        factory.createIdentifier(queryName)
+                      ),
+                      factory.createPropertyAssignment(
+                        factory.createIdentifier("values"),
+                        factory.createArrayLiteralExpression(
+                          params.map((param, i) =>
+                            factory.createPropertyAccessExpression(
+                              factory.createIdentifier("args"),
+                              factory.createIdentifier(argName(i, param.column))
+                            )
+                          ),
+                          false
+                        )
+                      ),
+                    ],
+                    true
+                  ),
+                ]
+              )
+            )
+          ),
+        ],
+        true
+      )
+    );
+  }
 }

@@ -1,6 +1,7 @@
 import {
   SyntaxKind,
   NodeFlags,
+  Node,
   TypeNode,
   factory,
   FunctionDeclaration,
@@ -618,5 +619,14 @@ export class Driver {
     params: Parameter[]
   ): FunctionDeclaration {
     throw new Error("postgres driver currently does not support :execlastid");
+  }
+
+  copyfromDecl(
+    funcName: string,
+    queryName: string,
+    argIface: string | undefined,
+    params: Parameter[]
+  ): Node {
+    throw new Error("postgres driver currently does not support :copyfrom");
   }
 }

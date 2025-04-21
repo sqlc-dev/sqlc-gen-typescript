@@ -435,4 +435,15 @@ export class Driver {
       "better-sqlite3 driver currently does not support :execlastid"
     );
   }
+
+  copyfromDecl(
+    funcName: string,
+    queryName: string,
+    argIface: string | undefined,
+    params: Parameter[]
+  ): Node {
+    throw new Error(
+      "better-sqlite3 driver currently does not support :copyfrom"
+    );
+  }
 }

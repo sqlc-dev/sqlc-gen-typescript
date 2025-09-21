@@ -10,9 +10,13 @@ export function fieldName(
   if (column) {
     name = column.name;
   }
-  return name
-    .toLowerCase()
-    .replace(/([_][a-z])/g, (group) => group.toUpperCase().replace("_", ""));
+  if (name.includes('_')) {
+    return name
+      .toLowerCase()
+      .replace(/([_][a-z])/g, (group) => group.toUpperCase().replace("_", ""));
+  } else {
+    return name;
+  }
 }
 
 export function argName(index: number, column?: Column): string {

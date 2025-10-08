@@ -55,7 +55,7 @@ export class Driver {
     }
 
     let typ: TypeNode = factory.createKeywordTypeNode(SyntaxKind.AnyKeyword);
-    switch (column.type.name) {
+    switch (column.type.name.toLowerCase()) {
       case "int":
       case "integer":
       case "tinyint":
@@ -87,6 +87,11 @@ export class Driver {
       case "boolean":
       case "bool": {
         typ = factory.createKeywordTypeNode(SyntaxKind.BooleanKeyword);
+        break;
+      }
+      case "text":
+      case "varchar": {
+        typ = factory.createKeywordTypeNode(SyntaxKind.StringKeyword);
         break;
       }
       case "date":

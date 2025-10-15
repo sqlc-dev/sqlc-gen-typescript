@@ -28,6 +28,9 @@ export async function getAuthor(client: Client, args: GetAuthorArgs): Promise<Ge
         return null;
     }
     const row = rows[0];
+    if (!row) {
+        return null;
+    }
     return {
         id: row[0],
         name: row[1],
@@ -168,6 +171,9 @@ export async function test(client: Client): Promise<TestRow | null> {
         return null;
     }
     const row = rows[0];
+    if (!row) {
+        return null;
+    }
     return {
         cBit: row[0],
         cTinyint: row[1],

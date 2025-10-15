@@ -627,6 +627,17 @@ export class Driver {
                 NodeFlags.TypeExcludesFlags
             )
           ),
+	  factory.createIfStatement(
+            factory.createPrefixUnaryExpression(
+              SyntaxKind.ExclamationToken,
+              factory.createIdentifier("row")
+            ),
+            factory.createBlock(
+              [factory.createReturnStatement(factory.createNull())],
+              true
+            ),
+            undefined
+          ),
           factory.createReturnStatement(
             factory.createObjectLiteralExpression(
               columns.map((col, i) =>

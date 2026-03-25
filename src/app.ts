@@ -43,7 +43,8 @@ writeOutput(result);
 interface Options {
   runtime?: string;
   driver?: string;
-  mysql2?: Mysql2Options
+  mysql2?: Mysql2Options,
+  types_only?: boolean
 }
 
 interface Driver {
@@ -111,7 +112,6 @@ function codegen(input: GenerateRequest): GenerateResponse {
   // TODO: Verify options, parse them from protobuf honestly
 
   const querymap = new Map<string, Query[]>();
-
   for (const query of input.queries) {
     if (!querymap.has(query.filename)) {
       querymap.set(query.filename, []);
@@ -121,8 +121,11 @@ function codegen(input: GenerateRequest): GenerateResponse {
   }
 
   for (const [filename, queries] of querymap.entries()) {
-    const nodes = driver.preamble(queries);
-
+    let nodes: Node[]
+    if (!options.types_only) {
+      nodes = driver.preamble(queries);
+    }
+    nodes = [];
     for (const query of queries) {
       const colmap = new Map<string, number>();
       for (let column of query.columns) {
@@ -138,14 +141,15 @@ function codegen(input: GenerateRequest): GenerateResponse {
 
       const lowerName = query.name[0].toLowerCase() + query.name.slice(1);
       const textName = `${lowerName}Query`;
-
-      nodes.push(
-        queryDecl(
-          textName,
-          `-- name: ${query.name} ${query.cmd}
-${query.text}`
-        )
-      );
+      if (!options.types_only) {
+        nodes.push(
+          queryDecl(
+            textName,
+            `-- name: ${query.name} ${query.cmd}
+                ${query.text}`
+          )
+        );
+      }
 
       let argIface = undefined;
       let returnIface = undefined;
@@ -157,45 +161,46 @@ ${query.text}`
         returnIface = `${query.name}Row`;
         nodes.push(rowDecl(returnIface, driver, query.columns));
       }
-
-      switch (query.cmd) {
-        case ":exec": {
-          nodes.push(
-            driver.execDecl(lowerName, textName, argIface, query.params)
-          );
-          break;
-        }
-        case ":execlastid": {
-          nodes.push(
-            driver.execlastidDecl(lowerName, textName, argIface, query.params)
-          );
-          break;
-        }
-        case ":one": {
-          nodes.push(
-            driver.oneDecl(
-              lowerName,
-              textName,
-              argIface,
-              returnIface ?? "void",
-              query.params,
-              query.columns
-            )
-          );
-          break;
-        }
-        case ":many": {
-          nodes.push(
-            driver.manyDecl(
-              lowerName,
-              textName,
-              argIface,
-              returnIface ?? "void",
-              query.params,
-              query.columns
-            )
-          );
-          break;
+      if (!options.types_only) {
+        switch (query.cmd) {
+          case ":exec": {
+            nodes.push(
+              driver.execDecl(lowerName, textName, argIface, query.params)
+            );
+            break;
+          }
+          case ":execlastid": {
+            nodes.push(
+              driver.execlastidDecl(lowerName, textName, argIface, query.params)
+            );
+            break;
+          }
+          case ":one": {
+            nodes.push(
+              driver.oneDecl(
+                lowerName,
+                textName,
+                argIface,
+                returnIface ?? "void",
+                query.params,
+                query.columns
+              )
+            );
+            break;
+          }
+          case ":many": {
+            nodes.push(
+              driver.manyDecl(
+                lowerName,
+                textName,
+                argIface,
+                returnIface ?? "void",
+                query.params,
+                query.columns
+              )
+            );
+            break;
+          }
         }
       }
       if (nodes) {

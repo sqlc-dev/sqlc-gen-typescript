@@ -1,4 +1,4 @@
-import { SyntaxKind, NodeFlags, TypeNode, factory } from "typescript";
+import { Expression, SyntaxKind, NodeFlags, TypeNode, factory } from "typescript";
 
 // import { writeFileSync, STDIO } from "javy/fs";
 
@@ -43,6 +43,20 @@ function funcParamsDecl(iface: string | undefined, params: Parameter[]) {
   }
 
   return funcParams;
+}
+
+// The mysql2 types declare insertId as a number, but with
+// big_number_strings enabled the driver returns big values as strings, so
+// convert explicitly to match the declared return type
+function insertIdExpr(value: Expression, options: Mysql2Options): Expression {
+  if (options.support_big_numbers && options.big_number_strings) {
+    return factory.createCallExpression(
+      factory.createIdentifier("String"),
+      undefined,
+      [value]
+    );
+  }
+  return value;
 }
 
 export class Driver {
@@ -658,6 +672,21 @@ export class Driver {
   ) {
     const funcParams = funcParamsDecl(argIface, params);
 
+    // Mirror the bigint column mapping: with support_big_numbers the driver
+    // may return the last insert id as a string, and with big_number_strings
+    // it always does
+    let insertIdType: TypeNode = factory.createKeywordTypeNode(
+      SyntaxKind.NumberKeyword
+    );
+    if (this.options.support_big_numbers) {
+      insertIdType = this.options.big_number_strings
+        ? factory.createKeywordTypeNode(SyntaxKind.StringKeyword)
+        : factory.createUnionTypeNode([
+            factory.createKeywordTypeNode(SyntaxKind.NumberKeyword),
+            factory.createKeywordTypeNode(SyntaxKind.StringKeyword),
+          ]);
+    }
+
     return factory.createFunctionDeclaration(
       [
         factory.createToken(SyntaxKind.ExportKeyword),
@@ -668,7 +697,7 @@ export class Driver {
       undefined,
       funcParams,
       factory.createTypeReferenceNode(factory.createIdentifier("Promise"), [
-        factory.createTypeReferenceNode("number", undefined),
+        insertIdType,
       ]),
       factory.createBlock(
         [
@@ -732,14 +761,17 @@ export class Driver {
             )
           ),
           factory.createReturnStatement(
-            factory.createBinaryExpression(
-              factory.createPropertyAccessChain(
-                factory.createIdentifier("result"),
-                factory.createToken(SyntaxKind.QuestionDotToken),
-                factory.createIdentifier("insertId")
+            insertIdExpr(
+              factory.createBinaryExpression(
+                factory.createPropertyAccessChain(
+                  factory.createIdentifier("result"),
+                  factory.createToken(SyntaxKind.QuestionDotToken),
+                  factory.createIdentifier("insertId")
+                ),
+                factory.createToken(SyntaxKind.QuestionQuestionToken),
+                factory.createNumericLiteral(0)
               ),
-              factory.createToken(SyntaxKind.QuestionQuestionToken),
-              factory.createNumericLiteral(0)
+              this.options
             )
           ),
         ],

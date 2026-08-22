@@ -93,12 +93,12 @@ export interface CreateAuthorReturnIdArgs {
     bio: string | null;
 }
 
-export async function createAuthorReturnId(client: Client, args: CreateAuthorReturnIdArgs): Promise<number> {
+export async function createAuthorReturnId(client: Client, args: CreateAuthorReturnIdArgs): Promise<string> {
     const [result] = await client.query<ResultSetHeader>({
         sql: createAuthorReturnIdQuery,
         values: [args.name, args.bio]
     });
-    return result?.insertId ?? 0;
+    return String(result?.insertId ?? 0);
 }
 
 export const deleteAuthorQuery = `-- name: DeleteAuthor :exec

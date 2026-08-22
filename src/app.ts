@@ -28,7 +28,7 @@ import {
   Query,
 } from "./gen/plugin/codegen_pb";
 
-import { argName, colName } from "./drivers/utlis";
+import { argName, colName, propertyKey } from "./drivers/utlis";
 import {
   CustomTypeFn,
   CustomTypeRegistry,
@@ -268,7 +268,7 @@ function argsDecl(
     params.map((param, i) =>
       factory.createPropertySignature(
         undefined,
-        factory.createIdentifier(argName(i, param.column)),
+        propertyKey(argName(i, param.column)),
         undefined,
         driver.columnType(param.column)
       )
@@ -289,7 +289,7 @@ function rowDecl(
     columns.map((column, i) =>
       factory.createPropertySignature(
         undefined,
-        factory.createIdentifier(colName(i, column)),
+        propertyKey(colName(i, column)),
         undefined,
         driver.columnType(column)
       )

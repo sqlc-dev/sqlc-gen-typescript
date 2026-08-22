@@ -9,7 +9,7 @@ import {
 
 import { Parameter, Column, Query } from "../gen/plugin/codegen_pb";
 import { CustomTypeFn } from "../customTypes";
-import { argName } from "./utlis";
+import { argName, propertyAccess } from "./utlis";
 
 function funcParamsDecl(iface: string | undefined, params: Parameter[]) {
   let funcParams = [
@@ -200,10 +200,7 @@ export class Driver {
                 ),
                 undefined,
                 params.map((param, i) =>
-                  factory.createPropertyAccessExpression(
-                    factory.createIdentifier("args"),
-                    factory.createIdentifier(argName(i, param.column))
-                  )
+                  propertyAccess("args", argName(i, param.column))
                 )
               )
             )
@@ -286,10 +283,7 @@ export class Driver {
                       ),
                       undefined,
                       params.map((param, i) =>
-                        factory.createPropertyAccessExpression(
-                          factory.createIdentifier("args"),
-                          factory.createIdentifier(argName(i, param.column))
-                        )
+                        propertyAccess("args", argName(i, param.column))
                       )
                     )
                   )
@@ -401,10 +395,7 @@ export class Driver {
                       ),
                       undefined,
                       params.map((param, i) =>
-                        factory.createPropertyAccessExpression(
-                          factory.createIdentifier("args"),
-                          factory.createIdentifier(argName(i, param.column))
-                        )
+                        propertyAccess("args", argName(i, param.column))
                       )
                     )
                   )

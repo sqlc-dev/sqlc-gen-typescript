@@ -8,8 +8,8 @@ export function fieldName(
   index: number,
   column?: Column
 ): string {
-  let name = `${prefix}_${index}`;
-  if (column) {
+  let name = `${prefix}_${index + 1}`;
+  if (column && column.name) {
     name = column.name;
   }
   return name

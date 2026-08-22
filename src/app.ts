@@ -51,6 +51,7 @@ interface Options {
   driver?: string;
   mysql2?: Mysql2Options
   overrides?: TypeOverride[];
+  types_only?: boolean;
 }
 
 interface Driver {
@@ -132,7 +133,9 @@ function codegen(input: GenerateRequest): GenerateResponse {
   }
 
   for (const [filename, queries] of querymap.entries()) {
-    const nodes = driver.preamble(queries);
+    // With types_only, emit only interfaces, enums, and override imports —
+    // no driver imports, query constants, or query functions
+    const nodes = options.types_only ? [] : driver.preamble(queries);
     // Insert custom type imports and enum declarations after the driver's
     // own imports, before any other declarations
     let insertAt = 0;
@@ -157,13 +160,15 @@ function codegen(input: GenerateRequest): GenerateResponse {
       const lowerName = query.name[0].toLowerCase() + query.name.slice(1);
       const textName = `${lowerName}Query`;
 
-      nodes.push(
-        queryDecl(
-          textName,
-          `-- name: ${query.name} ${query.cmd}
+      if (!options.types_only) {
+        nodes.push(
+          queryDecl(
+            textName,
+            `-- name: ${query.name} ${query.cmd}
 ${query.text}`
-        )
-      );
+          )
+        );
+      }
 
       let argIface = undefined;
       let returnIface = undefined;
@@ -176,7 +181,7 @@ ${query.text}`
         nodes.push(rowDecl(returnIface, driver, query.columns));
       }
 
-      switch (query.cmd) {
+      switch (options.types_only ? "" : query.cmd) {
         case ":exec": {
           nodes.push(
             driver.execDecl(lowerName, textName, argIface, query.params)

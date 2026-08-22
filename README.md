@@ -414,6 +414,23 @@ Note that overrides only change the generated *types* — converting values at
 runtime (for example, parsing a `numeric` string into a `Big`) is still up to
 your driver configuration.
 
+### Types-only generation
+
+Set `types_only: true` to generate only the `Args`/`Row` interfaces, enum
+union types, and override imports — no driver imports, query constants, or
+query functions. This is useful for sharing database types with a frontend
+that never runs the queries itself.
+
+```yaml
+codegen:
+- out: src/types/db
+  plugin: ts
+  options:
+    runtime: node
+    driver: pg
+    types_only: true
+```
+
 ## Development
 
 If you want to build and test sqlc-gen-typescript locally, follow these steps:

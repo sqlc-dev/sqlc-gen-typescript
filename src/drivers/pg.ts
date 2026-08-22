@@ -350,7 +350,7 @@ export class Driver {
       factory.createImportDeclaration(
         undefined,
         factory.createImportClause(
-          false,
+          true,
           undefined,
           factory.createNamedImports([
             factory.createImportSpecifier(
@@ -381,7 +381,7 @@ export class Driver {
         factory.createImportDeclaration(
           undefined,
           factory.createImportClause(
-            false,
+            true,
             undefined,
             factory.createNamedImports([
               factory.createImportSpecifier(

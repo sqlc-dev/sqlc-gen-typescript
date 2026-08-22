@@ -237,8 +237,18 @@ export class Driver {
       factory.createImportDeclaration(
         undefined,
         factory.createImportClause(
-          false,
+          true,
           factory.createIdentifier("mysql"),
+          undefined
+        ),
+        factory.createStringLiteral("mysql2/promise"),
+        undefined
+      ),
+      factory.createImportDeclaration(
+        undefined,
+        factory.createImportClause(
+          true,
+          undefined,
           factory.createNamedImports([
             factory.createImportSpecifier(
               false,

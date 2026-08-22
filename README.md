@@ -334,6 +334,103 @@ sql:
       driver: better-sqlite3 # npm package name
 ```
 
+## Strongly typed columns
+
+### Enums
+
+Enum types declared in your schema are generated as string literal union
+types, along with a runtime array of their values. No configuration is
+required.
+
+```sql
+CREATE TYPE status AS ENUM ('active', 'inactive', 'banned');
+
+CREATE TABLE users (
+  id BIGSERIAL PRIMARY KEY,
+  st status NOT NULL
+);
+```
+
+```ts
+export type Status = "active" | "inactive" | "banned";
+
+export const StatusValues: readonly Status[] = ["active", "inactive", "banned"];
+
+export interface GetUserRow {
+    id: string;
+    st: Status;
+}
+```
+
+### Type overrides
+
+Use the `overrides` option to map SQL types (including domains and other
+custom types) or individual columns to your own TypeScript types. Each entry
+matches either a SQL type name (`db_type`) or a single column
+(`column: "table.column"`), and emits `ts_type` verbatim. An optional
+`import` adds a type-only import to files that use the override.
+
+```yaml
+codegen:
+- out: db
+  plugin: ts
+  options:
+    runtime: node
+    driver: pg
+    overrides:
+    # Map a domain (or any SQL type) to an imported type
+    - db_type: "email"
+      ts_type: "Email"
+      import:
+        path: "./brands"
+        name: "Email"
+    # Inline branded/nominal types work too
+    - db_type: "user_id"
+      ts_type: 'string & { readonly __brand: "user_id" }'
+    # Give a JSON column a concrete payload type
+    - column: "users.meta"
+      ts_type: "UserMeta"
+      import:
+        path: "./brands"
+        name: "UserMeta"
+```
+
+```ts
+import type { Email, UserMeta } from "./brands";
+
+export interface GetUserRow {
+    id: string & { readonly __brand: "user_id" };
+    email: Email;
+    meta: UserMeta | null;
+}
+```
+
+Column overrides take precedence over `db_type` overrides, which take
+precedence over generated enum types and the built-in type mappings.
+Nullability and array handling still apply: a nullable overridden column is
+emitted as `T | null`, and an array column as `T[]`.
+
+Note that overrides only change the generated *types* — converting values at
+runtime (for example, parsing a `numeric` string into a `Big`) is still up to
+your driver configuration.
+
+### Types-only generation
+
+Set `types_only: true` to generate only the `Args`/`Row` interfaces, enum
+union types, and override imports — no driver imports, query constants, or
+query functions. This is useful for sharing database types with a frontend
+that never runs the queries itself.
+
+```yaml
+codegen:
+- out: src/types/db
+  plugin: ts
+  options:
+    runtime: node
+    driver: pg
+    types_only: true
+```
+
 ## Development
 
 If you want to build and test sqlc-gen-typescript locally, follow these steps:

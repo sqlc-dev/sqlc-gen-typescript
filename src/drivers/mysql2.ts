@@ -1,9 +1,10 @@
-import { SyntaxKind, NodeFlags, TypeNode, factory } from "typescript";
+import { Expression, SyntaxKind, NodeFlags, TypeNode, factory } from "typescript";
 
 // import { writeFileSync, STDIO } from "javy/fs";
 
 import { Parameter, Column, Query } from "../gen/plugin/codegen_pb";
-import { argName, colName } from "./utlis";
+import { CustomTypeFn } from "../customTypes";
+import { argName, colName, propertyAccess, propertyKey } from "./utlis";
 
 export interface Mysql2Options {
   support_big_numbers?: boolean;
@@ -44,11 +45,27 @@ function funcParamsDecl(iface: string | undefined, params: Parameter[]) {
   return funcParams;
 }
 
+// The mysql2 types declare insertId as a number, but with
+// big_number_strings enabled the driver returns big values as strings, so
+// convert explicitly to match the declared return type
+function insertIdExpr(value: Expression, options: Mysql2Options): Expression {
+  if (options.support_big_numbers && options.big_number_strings) {
+    return factory.createCallExpression(
+      factory.createIdentifier("String"),
+      undefined,
+      [value]
+    );
+  }
+  return value;
+}
+
 export class Driver {
   private readonly options: Mysql2Options
+  private readonly customType: CustomTypeFn;
 
-  constructor(options?: Mysql2Options) {
+  constructor(options?: Mysql2Options, customType?: CustomTypeFn) {
     this.options = options ?? {}
+    this.customType = customType ?? (() => undefined);
   }
 
   columnType(column?: Column): TypeNode {
@@ -57,7 +74,10 @@ export class Driver {
     }
     let typ: TypeNode = factory.createKeywordTypeNode(SyntaxKind.StringKeyword);
 
-    switch (column.type.name) {
+    const custom = this.customType(column);
+    if (custom !== undefined) {
+      typ = custom;
+    } else switch (column.type.name) {
       case "bigint": {
         typ = factory.createKeywordTypeNode(SyntaxKind.NumberKeyword);
 
@@ -231,8 +251,18 @@ export class Driver {
       factory.createImportDeclaration(
         undefined,
         factory.createImportClause(
-          false,
+          true,
           factory.createIdentifier("mysql"),
+          undefined
+        ),
+        factory.createStringLiteral("mysql2/promise"),
+        undefined
+      ),
+      factory.createImportDeclaration(
+        undefined,
+        factory.createImportClause(
+          true,
+          undefined,
           factory.createNamedImports([
             factory.createImportSpecifier(
               false,
@@ -318,10 +348,7 @@ export class Driver {
                         factory.createIdentifier("values"),
                         factory.createArrayLiteralExpression(
                           params.map((param, i) =>
-                            factory.createPropertyAccessExpression(
-                              factory.createIdentifier("args"),
-                              factory.createIdentifier(argName(i, param.column))
-                            )
+                            propertyAccess("args", argName(i, param.column))
                           ),
                           false
                         )
@@ -408,12 +435,7 @@ export class Driver {
                               factory.createIdentifier("values"),
                               factory.createArrayLiteralExpression(
                                 params.map((param, i) =>
-                                  factory.createPropertyAccessExpression(
-                                    factory.createIdentifier("args"),
-                                    factory.createIdentifier(
-                                      argName(i, param.column)
-                                    )
-                                  )
+                                  propertyAccess("args", argName(i, param.column))
                                 ),
                                 false
                               )
@@ -467,7 +489,7 @@ export class Driver {
                         factory.createObjectLiteralExpression(
                           columns.map((col, i) =>
                             factory.createPropertyAssignment(
-                              factory.createIdentifier(colName(i, col)),
+                              propertyKey(colName(i, col)),
                               factory.createElementAccessExpression(
                                 factory.createIdentifier("row"),
                                 factory.createNumericLiteral(`${i}`)
@@ -560,12 +582,7 @@ export class Driver {
                               factory.createIdentifier("values"),
                               factory.createArrayLiteralExpression(
                                 params.map((param, i) =>
-                                  factory.createPropertyAccessExpression(
-                                    factory.createIdentifier("args"),
-                                    factory.createIdentifier(
-                                      argName(i, param.column)
-                                    )
-                                  )
+                                  propertyAccess("args", argName(i, param.column))
                                 ),
                                 false
                               )
@@ -631,7 +648,7 @@ export class Driver {
             factory.createObjectLiteralExpression(
               columns.map((col, i) =>
                 factory.createPropertyAssignment(
-                  factory.createIdentifier(colName(i, col)),
+                  propertyKey(colName(i, col)),
                   factory.createElementAccessExpression(
                     factory.createIdentifier("row"),
                     factory.createNumericLiteral(`${i}`)
@@ -655,6 +672,21 @@ export class Driver {
   ) {
     const funcParams = funcParamsDecl(argIface, params);
 
+    // Mirror the bigint column mapping: with support_big_numbers the driver
+    // may return the last insert id as a string, and with big_number_strings
+    // it always does
+    let insertIdType: TypeNode = factory.createKeywordTypeNode(
+      SyntaxKind.NumberKeyword
+    );
+    if (this.options.support_big_numbers) {
+      insertIdType = this.options.big_number_strings
+        ? factory.createKeywordTypeNode(SyntaxKind.StringKeyword)
+        : factory.createUnionTypeNode([
+            factory.createKeywordTypeNode(SyntaxKind.NumberKeyword),
+            factory.createKeywordTypeNode(SyntaxKind.StringKeyword),
+          ]);
+    }
+
     return factory.createFunctionDeclaration(
       [
         factory.createToken(SyntaxKind.ExportKeyword),
@@ -665,7 +697,7 @@ export class Driver {
       undefined,
       funcParams,
       factory.createTypeReferenceNode(factory.createIdentifier("Promise"), [
-        factory.createTypeReferenceNode("number", undefined),
+        insertIdType,
       ]),
       factory.createBlock(
         [
@@ -707,12 +739,7 @@ export class Driver {
                               factory.createIdentifier("values"),
                               factory.createArrayLiteralExpression(
                                 params.map((param, i) =>
-                                  factory.createPropertyAccessExpression(
-                                    factory.createIdentifier("args"),
-                                    factory.createIdentifier(
-                                      argName(i, param.column)
-                                    )
-                                  )
+                                  propertyAccess("args", argName(i, param.column))
                                 ),
                                 false
                               )
@@ -734,14 +761,17 @@ export class Driver {
             )
           ),
           factory.createReturnStatement(
-            factory.createBinaryExpression(
-              factory.createPropertyAccessChain(
-                factory.createIdentifier("result"),
-                factory.createToken(SyntaxKind.QuestionDotToken),
-                factory.createIdentifier("insertId")
+            insertIdExpr(
+              factory.createBinaryExpression(
+                factory.createPropertyAccessChain(
+                  factory.createIdentifier("result"),
+                  factory.createToken(SyntaxKind.QuestionDotToken),
+                  factory.createIdentifier("insertId")
+                ),
+                factory.createToken(SyntaxKind.QuestionQuestionToken),
+                factory.createNumericLiteral(0)
               ),
-              factory.createToken(SyntaxKind.QuestionQuestionToken),
-              factory.createNumericLiteral(0)
+              this.options
             )
           ),
         ],

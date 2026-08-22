@@ -8,7 +8,8 @@ import {
 } from "typescript";
 
 import { Parameter, Column, Query } from "../gen/plugin/codegen_pb";
-import { argName, colName } from "./utlis";
+import { CustomTypeFn } from "../customTypes";
+import { argName, colName, propertyAccess, propertyKey } from "./utlis";
 
 function funcParamsDecl(iface: string | undefined, params: Parameter[]) {
   let funcParams = [
@@ -45,6 +46,12 @@ function funcParamsDecl(iface: string | undefined, params: Parameter[]) {
 }
 
 export class Driver {
+  private readonly customType: CustomTypeFn;
+
+  constructor(customType?: CustomTypeFn) {
+    this.customType = customType ?? (() => undefined);
+  }
+
   columnType(column?: Column): TypeNode {
     if (column === undefined || column.type === undefined) {
       return factory.createKeywordTypeNode(SyntaxKind.AnyKeyword);
@@ -56,7 +63,10 @@ export class Driver {
       typeName = typeName.slice(pgCatalog.length);
     }
     let typ: TypeNode = factory.createKeywordTypeNode(SyntaxKind.StringKeyword);
-    switch (typeName) {
+    const custom = this.customType(column);
+    if (custom !== undefined) {
+      typ = custom;
+    } else switch (typeName) {
       case "aclitem": {
         // string
         break;
@@ -340,7 +350,7 @@ export class Driver {
       factory.createImportDeclaration(
         undefined,
         factory.createImportClause(
-          false,
+          true,
           undefined,
           factory.createNamedImports([
             factory.createImportSpecifier(
@@ -371,7 +381,7 @@ export class Driver {
         factory.createImportDeclaration(
           undefined,
           factory.createImportClause(
-            false,
+            true,
             undefined,
             factory.createNamedImports([
               factory.createImportSpecifier(
@@ -472,10 +482,7 @@ export class Driver {
                         factory.createIdentifier("values"),
                         factory.createArrayLiteralExpression(
                           params.map((param, i) =>
-                            factory.createPropertyAccessExpression(
-                              factory.createIdentifier("args"),
-                              factory.createIdentifier(argName(i, param.column))
-                            )
+                            propertyAccess("args", argName(i, param.column))
                           ),
                           false
                         )
@@ -553,12 +560,7 @@ export class Driver {
                               factory.createIdentifier("values"),
                               factory.createArrayLiteralExpression(
                                 params.map((param, i) =>
-                                  factory.createPropertyAccessExpression(
-                                    factory.createIdentifier("args"),
-                                    factory.createIdentifier(
-                                      argName(i, param.column)
-                                    )
-                                  )
+                                  propertyAccess("args", argName(i, param.column))
                                 ),
                                 false
                               )
@@ -630,7 +632,7 @@ export class Driver {
             factory.createObjectLiteralExpression(
               columns.map((col, i) =>
                 factory.createPropertyAssignment(
-                  factory.createIdentifier(colName(i, col)),
+                  propertyKey(colName(i, col)),
                   factory.createElementAccessExpression(
                     factory.createIdentifier("row"),
                     factory.createNumericLiteral(`${i}`)
@@ -701,12 +703,7 @@ export class Driver {
                               factory.createIdentifier("values"),
                               factory.createArrayLiteralExpression(
                                 params.map((param, i) =>
-                                  factory.createPropertyAccessExpression(
-                                    factory.createIdentifier("args"),
-                                    factory.createIdentifier(
-                                      argName(i, param.column)
-                                    )
-                                  )
+                                  propertyAccess("args", argName(i, param.column))
                                 ),
                                 false
                               )
@@ -763,7 +760,7 @@ export class Driver {
                         factory.createObjectLiteralExpression(
                           columns.map((col, i) =>
                             factory.createPropertyAssignment(
-                              factory.createIdentifier(colName(i, col)),
+                              propertyKey(colName(i, col)),
                               factory.createElementAccessExpression(
                                 factory.createIdentifier("row"),
                                 factory.createNumericLiteral(`${i}`)

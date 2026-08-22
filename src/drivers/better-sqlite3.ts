@@ -8,7 +8,8 @@ import {
 } from "typescript";
 
 import { Parameter, Column, Query } from "../gen/plugin/codegen_pb";
-import { argName } from "./utlis";
+import { CustomTypeFn } from "../customTypes";
+import { argName, propertyAccess } from "./utlis";
 
 function funcParamsDecl(iface: string | undefined, params: Parameter[]) {
   let funcParams = [
@@ -45,6 +46,12 @@ function funcParamsDecl(iface: string | undefined, params: Parameter[]) {
 }
 
 export class Driver {
+  private readonly customType: CustomTypeFn;
+
+  constructor(customType?: CustomTypeFn) {
+    this.customType = customType ?? (() => undefined);
+  }
+
   /**
    * {@link https://github.com/WiseLibs/better-sqlite3/blob/v9.4.1/docs/api.md#binding-parameters}
    * {@link https://github.com/sqlc-dev/sqlc/blob/v1.25.0/internal/codegen/golang/sqlite_type.go}
@@ -55,7 +62,10 @@ export class Driver {
     }
 
     let typ: TypeNode = factory.createKeywordTypeNode(SyntaxKind.AnyKeyword);
-    switch (column.type.name) {
+    const custom = this.customType(column);
+    if (custom !== undefined) {
+      typ = custom;
+    } else switch (column.type.name) {
       case "int":
       case "integer":
       case "tinyint":
@@ -115,7 +125,7 @@ export class Driver {
       factory.createImportDeclaration(
         undefined,
         factory.createImportClause(
-          false,
+          true,
           undefined,
           factory.createNamedImports([
             factory.createImportSpecifier(
@@ -190,10 +200,7 @@ export class Driver {
                 ),
                 undefined,
                 params.map((param, i) =>
-                  factory.createPropertyAccessExpression(
-                    factory.createIdentifier("args"),
-                    factory.createIdentifier(argName(i, param.column))
-                  )
+                  propertyAccess("args", argName(i, param.column))
                 )
               )
             )
@@ -276,10 +283,7 @@ export class Driver {
                       ),
                       undefined,
                       params.map((param, i) =>
-                        factory.createPropertyAccessExpression(
-                          factory.createIdentifier("args"),
-                          factory.createIdentifier(argName(i, param.column))
-                        )
+                        propertyAccess("args", argName(i, param.column))
                       )
                     )
                   )
@@ -391,10 +395,7 @@ export class Driver {
                       ),
                       undefined,
                       params.map((param, i) =>
-                        factory.createPropertyAccessExpression(
-                          factory.createIdentifier("args"),
-                          factory.createIdentifier(argName(i, param.column))
-                        )
+                        propertyAccess("args", argName(i, param.column))
                       )
                     )
                   )

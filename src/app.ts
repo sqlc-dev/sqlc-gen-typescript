@@ -16,6 +16,7 @@ import {
   createPrinter,
   createSourceFile,
   factory,
+  isImportDeclaration,
 } from "typescript";
 
 import {
@@ -27,7 +28,12 @@ import {
   Query,
 } from "./gen/plugin/codegen_pb";
 
-import { argName, colName } from "./drivers/utlis";
+import { argName, colName, propertyKey } from "./drivers/utlis";
+import {
+  CustomTypeFn,
+  CustomTypeRegistry,
+  TypeOverride,
+} from "./customTypes";
 import { Driver as Sqlite3Driver } from "./drivers/better-sqlite3";
 import { Driver as PgDriver } from "./drivers/pg";
 import { Driver as PostgresDriver } from "./drivers/postgres";
@@ -44,6 +50,8 @@ interface Options {
   runtime?: string;
   driver?: string;
   mysql2?: Mysql2Options
+  overrides?: TypeOverride[];
+  types_only?: boolean;
 }
 
 interface Driver {
@@ -79,19 +87,22 @@ interface Driver {
   ) => Node;
 }
 
-function createNodeGenerator(options: Options): Driver {
+function createNodeGenerator(
+  options: Options,
+  customType: CustomTypeFn
+): Driver {
   switch (options.driver) {
     case "mysql2": {
-      return new MysqlDriver(options.mysql2);
+      return new MysqlDriver(options.mysql2, customType);
     }
     case "pg": {
-      return new PgDriver();
+      return new PgDriver(customType);
     }
     case "postgres": {
-      return new PostgresDriver();
+      return new PostgresDriver(customType);
     }
     case "better-sqlite3": {
-      return new Sqlite3Driver();
+      return new Sqlite3Driver(customType);
     }
   }
   throw new Error(`unknown driver: ${options.driver}`);
@@ -106,7 +117,8 @@ function codegen(input: GenerateRequest): GenerateResponse {
     options = JSON.parse(text) as Options;
   }
 
-  const driver = createNodeGenerator(options);
+  const registry = new CustomTypeRegistry(input, options.overrides ?? []);
+  const driver = createNodeGenerator(options, registry.resolver());
 
   // TODO: Verify options, parse them from protobuf honestly
 
@@ -121,7 +133,16 @@ function codegen(input: GenerateRequest): GenerateResponse {
   }
 
   for (const [filename, queries] of querymap.entries()) {
-    const nodes = driver.preamble(queries);
+    // With types_only, emit only interfaces, enums, and override imports —
+    // no driver imports, query constants, or query functions
+    const nodes = options.types_only ? [] : driver.preamble(queries);
+    // Insert custom type imports and enum declarations after the driver's
+    // own imports, before any other declarations
+    let insertAt = 0;
+    while (insertAt < nodes.length && isImportDeclaration(nodes[insertAt])) {
+      insertAt++;
+    }
+    nodes.splice(insertAt, 0, ...registry.fileDecls(queries));
 
     for (const query of queries) {
       const colmap = new Map<string, number>();
@@ -139,13 +160,15 @@ function codegen(input: GenerateRequest): GenerateResponse {
       const lowerName = query.name[0].toLowerCase() + query.name.slice(1);
       const textName = `${lowerName}Query`;
 
-      nodes.push(
-        queryDecl(
-          textName,
-          `-- name: ${query.name} ${query.cmd}
+      if (!options.types_only) {
+        nodes.push(
+          queryDecl(
+            textName,
+            `-- name: ${query.name} ${query.cmd}
 ${query.text}`
-        )
-      );
+          )
+        );
+      }
 
       let argIface = undefined;
       let returnIface = undefined;
@@ -158,7 +181,7 @@ ${query.text}`
         nodes.push(rowDecl(returnIface, driver, query.columns));
       }
 
-      switch (query.cmd) {
+      switch (options.types_only ? "" : query.cmd) {
         case ":exec": {
           nodes.push(
             driver.execDecl(lowerName, textName, argIface, query.params)
@@ -221,6 +244,13 @@ function readInput(): GenerateRequest {
 }
 
 function queryDecl(name: string, sql: string) {
+  // Escape characters that have special meaning inside a template literal so
+  // queries containing backticks (MySQL quoting), "${" or backslashes still
+  // produce the original SQL text at runtime
+  const raw = sql
+    .replace(/\\/g, "\\\\")
+    .replace(/`/g, "\\`")
+    .replace(/\$\{/g, "\\${");
   return factory.createVariableStatement(
     [factory.createToken(SyntaxKind.ExportKeyword)],
     factory.createVariableDeclarationList(
@@ -229,7 +259,7 @@ function queryDecl(name: string, sql: string) {
           factory.createIdentifier(name),
           undefined,
           undefined,
-          factory.createNoSubstitutionTemplateLiteral(sql, sql)
+          factory.createNoSubstitutionTemplateLiteral(sql, raw)
         ),
       ],
       NodeFlags.Const //| NodeFlags.Constant | NodeFlags.Constant
@@ -250,7 +280,7 @@ function argsDecl(
     params.map((param, i) =>
       factory.createPropertySignature(
         undefined,
-        factory.createIdentifier(argName(i, param.column)),
+        propertyKey(argName(i, param.column)),
         undefined,
         driver.columnType(param.column)
       )
@@ -271,7 +301,7 @@ function rowDecl(
     columns.map((column, i) =>
       factory.createPropertySignature(
         undefined,
-        factory.createIdentifier(colName(i, column)),
+        propertyKey(colName(i, column)),
         undefined,
         driver.columnType(column)
       )

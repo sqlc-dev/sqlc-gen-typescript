@@ -3,6 +3,7 @@ import { SyntaxKind, NodeFlags, TypeNode, factory } from "typescript";
 // import { writeFileSync, STDIO } from "javy/fs";
 
 import { Parameter, Column, Query } from "../gen/plugin/codegen_pb";
+import { CustomTypeFn } from "../customTypes";
 import { argName, colName } from "./utlis";
 
 export interface Mysql2Options {
@@ -46,9 +47,11 @@ function funcParamsDecl(iface: string | undefined, params: Parameter[]) {
 
 export class Driver {
   private readonly options: Mysql2Options
+  private readonly customType: CustomTypeFn;
 
-  constructor(options?: Mysql2Options) {
+  constructor(options?: Mysql2Options, customType?: CustomTypeFn) {
     this.options = options ?? {}
+    this.customType = customType ?? (() => undefined);
   }
 
   columnType(column?: Column): TypeNode {
@@ -57,7 +60,10 @@ export class Driver {
     }
     let typ: TypeNode = factory.createKeywordTypeNode(SyntaxKind.StringKeyword);
 
-    switch (column.type.name) {
+    const custom = this.customType(column);
+    if (custom !== undefined) {
+      typ = custom;
+    } else switch (column.type.name) {
       case "bigint": {
         typ = factory.createKeywordTypeNode(SyntaxKind.NumberKeyword);
 

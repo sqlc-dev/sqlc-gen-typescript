@@ -16,6 +16,7 @@ import {
   createPrinter,
   createSourceFile,
   factory,
+  isImportDeclaration,
 } from "typescript";
 
 import {
@@ -28,6 +29,11 @@ import {
 } from "./gen/plugin/codegen_pb";
 
 import { argName, colName } from "./drivers/utlis";
+import {
+  CustomTypeFn,
+  CustomTypeRegistry,
+  TypeOverride,
+} from "./customTypes";
 import { Driver as Sqlite3Driver } from "./drivers/better-sqlite3";
 import { Driver as PgDriver } from "./drivers/pg";
 import { Driver as PostgresDriver } from "./drivers/postgres";
@@ -44,6 +50,7 @@ interface Options {
   runtime?: string;
   driver?: string;
   mysql2?: Mysql2Options
+  overrides?: TypeOverride[];
 }
 
 interface Driver {
@@ -79,19 +86,22 @@ interface Driver {
   ) => Node;
 }
 
-function createNodeGenerator(options: Options): Driver {
+function createNodeGenerator(
+  options: Options,
+  customType: CustomTypeFn
+): Driver {
   switch (options.driver) {
     case "mysql2": {
-      return new MysqlDriver(options.mysql2);
+      return new MysqlDriver(options.mysql2, customType);
     }
     case "pg": {
-      return new PgDriver();
+      return new PgDriver(customType);
     }
     case "postgres": {
-      return new PostgresDriver();
+      return new PostgresDriver(customType);
     }
     case "better-sqlite3": {
-      return new Sqlite3Driver();
+      return new Sqlite3Driver(customType);
     }
   }
   throw new Error(`unknown driver: ${options.driver}`);
@@ -106,7 +116,8 @@ function codegen(input: GenerateRequest): GenerateResponse {
     options = JSON.parse(text) as Options;
   }
 
-  const driver = createNodeGenerator(options);
+  const registry = new CustomTypeRegistry(input, options.overrides ?? []);
+  const driver = createNodeGenerator(options, registry.resolver());
 
   // TODO: Verify options, parse them from protobuf honestly
 
@@ -122,6 +133,13 @@ function codegen(input: GenerateRequest): GenerateResponse {
 
   for (const [filename, queries] of querymap.entries()) {
     const nodes = driver.preamble(queries);
+    // Insert custom type imports and enum declarations after the driver's
+    // own imports, before any other declarations
+    let insertAt = 0;
+    while (insertAt < nodes.length && isImportDeclaration(nodes[insertAt])) {
+      insertAt++;
+    }
+    nodes.splice(insertAt, 0, ...registry.fileDecls(queries));
 
     for (const query of queries) {
       const colmap = new Map<string, number>();

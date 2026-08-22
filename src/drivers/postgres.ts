@@ -7,6 +7,7 @@ import {
 } from "typescript";
 
 import { Parameter, Column } from "../gen/plugin/codegen_pb";
+import { CustomTypeFn } from "../customTypes";
 import { argName, colName } from "./utlis";
 import { log } from "../logger";
 
@@ -45,6 +46,12 @@ function funcParamsDecl(iface: string | undefined, params: Parameter[]) {
 }
 
 export class Driver {
+  private readonly customType: CustomTypeFn;
+
+  constructor(customType?: CustomTypeFn) {
+    this.customType = customType ?? (() => undefined);
+  }
+
   columnType(column?: Column): TypeNode {
     if (column === undefined || column.type === undefined) {
       return factory.createKeywordTypeNode(SyntaxKind.AnyKeyword);
@@ -56,7 +63,10 @@ export class Driver {
       typeName = typeName.slice(pgCatalog.length);
     }
     let typ: TypeNode = factory.createKeywordTypeNode(SyntaxKind.StringKeyword);
-    switch (typeName) {
+    const custom = this.customType(column);
+    if (custom !== undefined) {
+      typ = custom;
+    } else switch (typeName) {
       case "aclitem": {
         // string
         break;

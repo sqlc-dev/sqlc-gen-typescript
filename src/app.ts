@@ -239,6 +239,13 @@ function readInput(): GenerateRequest {
 }
 
 function queryDecl(name: string, sql: string) {
+  // Escape characters that have special meaning inside a template literal so
+  // queries containing backticks (MySQL quoting), "${" or backslashes still
+  // produce the original SQL text at runtime
+  const raw = sql
+    .replace(/\\/g, "\\\\")
+    .replace(/`/g, "\\`")
+    .replace(/\$\{/g, "\\${");
   return factory.createVariableStatement(
     [factory.createToken(SyntaxKind.ExportKeyword)],
     factory.createVariableDeclarationList(
@@ -247,7 +254,7 @@ function queryDecl(name: string, sql: string) {
           factory.createIdentifier(name),
           undefined,
           undefined,
-          factory.createNoSubstitutionTemplateLiteral(sql, sql)
+          factory.createNoSubstitutionTemplateLiteral(sql, raw)
         ),
       ],
       NodeFlags.Const //| NodeFlags.Constant | NodeFlags.Constant

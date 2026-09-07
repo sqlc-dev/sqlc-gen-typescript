@@ -1,4 +1,4 @@
-.PHONY: generate
+.PHONY: generate test test-deno
 
 generate: examples/plugin.wasm examples/sqlc.dev.yaml
 	cd examples && sqlc-dev -f sqlc.dev.yaml generate
@@ -13,3 +13,11 @@ out.js: src/app.ts $(wildcard src/drivers/*.ts) src/gen/plugin/codegen_pb.ts
 
 src/gen/plugin/codegen_pb.ts: buf.gen.yaml
 	buf generate --template buf.gen.yaml buf.build/sqlc/sqlc --path plugin/
+
+test:
+	npx tsc --noEmit
+	npm test
+
+test-deno:
+	test -f examples/plugin.wasm
+	cd examples/deno-db-sqlite && deno task generate && deno task check && deno task test && deno task start

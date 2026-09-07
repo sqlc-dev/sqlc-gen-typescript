@@ -1,0 +1,8 @@
+CREATE TABLE records (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  display_name VARCHAR(120) NOT NULL UNIQUE,
+  event_count BIGINT NOT NULL,
+  is_active BOOLEAN NOT NULL,
+  score REAL NOT NULL,
+  payload BLOB
+);

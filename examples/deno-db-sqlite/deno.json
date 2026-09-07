@@ -1,0 +1,11 @@
+{
+  "imports": {
+    "jsr:@db/sqlite": "jsr:@db/sqlite@0.13.0"
+  },
+  "tasks": {
+    "generate": "sqlc generate",
+    "check": "deno check src/main.ts tests/queries_test.ts",
+    "start": "deno run -A src/main.ts",
+    "test": "deno test -A tests/"
+  }
+}

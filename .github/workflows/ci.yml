@@ -18,7 +18,14 @@ jobs:
     - run: chmod +x javy-x86_64-linux-v1.2.0
     - run: npm install
     - run: npx tsc --noEmit
+    - run: npm test
     - run: npx esbuild --bundle src/app.ts --tree-shaking=true --format=esm --target=es2020 --outfile=out.js
     - run: ./javy-x86_64-linux-v1.2.0 compile out.js -o examples/plugin.wasm
     - run: sqlc -f sqlc.dev.yaml diff
       working-directory: examples
+    - uses: denoland/setup-deno@v2
+      with:
+        deno-version: v2.x
+    - run: node tests/check-deno.mjs
+    - run: make test-deno
+    - run: git diff --exit-code -- examples/deno-db-sqlite

@@ -28,6 +28,8 @@ import {
 } from "./gen/plugin/codegen_pb";
 
 import { argName, colName } from "./drivers/utlis";
+import { runtimeImports } from "./drivers/runtime";
+import { Driver as DbSqliteDriver } from "./drivers/db-sqlite";
 import { Driver as Sqlite3Driver } from "./drivers/better-sqlite3";
 import { Driver as PgDriver } from "./drivers/pg";
 import { Driver as PostgresDriver } from "./drivers/postgres";
@@ -80,7 +82,18 @@ interface Driver {
 }
 
 function createNodeGenerator(options: Options): Driver {
+  const runtime = options.runtime ?? "node";
+  if (!["node", "bun", "deno"].includes(runtime)) {
+    throw new Error(`unknown runtime: ${runtime}`);
+  }
   switch (options.driver) {
+    case "@db/sqlite":
+    case "jsr:@db/sqlite": {
+      if (runtime !== "deno") {
+        throw new Error("@db/sqlite requires runtime: deno");
+      }
+      return new DbSqliteDriver();
+    }
     case "mysql2": {
       return new MysqlDriver(options.mysql2);
     }
@@ -107,6 +120,12 @@ function codegen(input: GenerateRequest): GenerateResponse {
   }
 
   const driver = createNodeGenerator(options);
+  if (
+    (options.driver === "@db/sqlite" || options.driver === "jsr:@db/sqlite") &&
+    input.settings?.engine && input.settings.engine !== "sqlite"
+  ) {
+    throw new Error("@db/sqlite requires engine: sqlite");
+  }
 
   // TODO: Verify options, parse them from protobuf honestly
 
@@ -202,7 +221,7 @@ ${query.text}`
         files.push(
           new File({
             name: `${filename.replace(".", "_")}.ts`,
-            contents: new TextEncoder().encode(printNode(nodes)),
+            contents: new TextEncoder().encode(printNode(runtimeImports(nodes, options.runtime ?? "node"))),
           })
         );
       }

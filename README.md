@@ -28,7 +28,18 @@ sql:
 
 - PostgreSQL via [pg](https://www.npmjs.com/package/pg) or [postgres](https://www.npmjs.com/package/postgres).
 - MySQL via [mysql2](https://www.npmjs.com/package/mysql2).
-- SQLite via [sqlite3](https://www.npmjs.com/package/better-sqlite3).
+- SQLite via [better-sqlite3](https://www.npmjs.com/package/better-sqlite3) or
+  Deno's [@db/sqlite](https://jsr.io/@db/sqlite).
+
+Set `runtime` to `node`, `bun`, or `deno`. Deno output imports npm drivers with
+`npm:` specifiers, such as `npm:pg`, `npm:postgres`, `npm:mysql2`, and
+`npm:better-sqlite3`. The `@db/sqlite` driver requires `runtime: deno` and imports
+`jsr:@db/sqlite`. `driver: "jsr:@db/sqlite"` is an alias for `driver: "@db/sqlite"`.
+
+Deno and `@db/sqlite` support require a build from this source tree; the released
+`0.1.3` WASM plugin shown in the existing configurations does not include them.
+See [Deno and @db/sqlite](#deno-and-dbsqlite) for local build instructions and a
+complete configuration.
 
 ## Getting started
 
@@ -37,8 +48,9 @@ This tutorial assumes that the latest version of sqlc is
 
 We'll generate TypeScript here, but other [language
 plugins](https://docs.sqlc.dev/en/latest/reference/language-support.html) are
-available. You'll need Bun (or Node.js) installed if you want to build and run a
-program with the code sqlc generates, but sqlc itself has no dependencies.
+available. This tutorial uses Bun (or Node.js) to run the generated program.
+For Deno, use the [Deno SQLite example](examples/deno-db-sqlite/README.md).
+sqlc itself has no dependencies.
 
 We'll also rely on sqlc's [managed databases](https://docs.sqlc.dev/en/latest/howto/managed-databases.html),
 which require a sqlc Cloud project and auth token. You can get those from
@@ -334,6 +346,37 @@ sql:
       driver: better-sqlite3 # npm package name
 ```
 
+### Deno and @db/sqlite
+
+Use a WASM plugin built from this source tree, following the
+[development instructions](#development). Set its absolute path in `sqlc.yaml`:
+
+```yaml
+version: "2"
+plugins:
+- name: ts
+  wasm:
+    url: file:///absolute/path/to/sqlc-gen-typescript/examples/plugin.wasm
+sql:
+- schema: "schema.sql"
+  queries: "query.sql"
+  engine: sqlite
+  codegen:
+  - out: db
+    plugin: ts
+    options:
+      runtime: deno
+      driver: "@db/sqlite"
+```
+
+The generated code runs with Deno alone. It imports `jsr:@db/sqlite` and emits
+synchronous functions that work inside `database.transaction` callbacks. Each
+call finalizes its prepared statement. Integer types allow `number | bigint`;
+open the database with `{ int64: true }` to preserve large SQLite integers.
+
+The [Deno example](examples/deno-db-sqlite/README.md) includes a pinned driver,
+a runnable program, query tests, and generation instructions.
+
 ## Development
 
 If you want to build and test sqlc-gen-typescript locally, follow these steps:
@@ -388,6 +431,9 @@ Check the `Makefile` for details.
    ```
    sqlc generate
    ```
+
+After building `examples/plugin.wasm`, run `make test-deno` with Deno 2 and
+sqlc installed to regenerate, check, test, and run the Deno example.
 
 For more details on sqlc development, refer to the sqlc core development guide. This guide provides additional information on setting up and working with sqlc in general, which may be useful for contributors to this project.  
 https://docs.sqlc.dev/en/latest/guides/development.html

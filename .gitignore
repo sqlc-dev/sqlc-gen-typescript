@@ -2,4 +2,3 @@ node_modules
 out.js
 *.wasm
 javy
-tests

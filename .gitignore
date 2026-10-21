@@ -3,3 +3,4 @@ out.js
 *.wasm
 javy
 tests
+test/out

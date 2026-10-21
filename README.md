@@ -1,5 +1,53 @@
 # sqlc-gen-typescript
 
+> [!NOTE]
+> **Wind-Growth fork** of [sqlc-dev/sqlc-gen-typescript](https://github.com/sqlc-dev/sqlc-gen-typescript)
+> (upstream `main`, which is 0.1.3 plus a `DO NOT EDIT` header and a null-row check).
+> It fixes the PostgreSQL gaps that made generated code silently wrong when
+> sqlc's [database analyzer](https://docs.sqlc.dev/en/latest/howto/generate.html#enhanced-analysis-with-managed-databases)
+> is on. The output shape is unchanged: `xArgs` / `xRow` interfaces, camelCase
+> fields, `null`, rows returned directly.
+>
+> - **Type names.** The analyzer names types the way PostgreSQL's `format_type`
+>   prints them (`integer`, `boolean`, `timestamp(3) with time zone`,
+>   `numeric(12,2)`); upstream only knew the `pg_type` names (`int4`, `bool`,
+>   `timestamptz`), so every such parameter and computed column fell back to
+>   `string`. postgres.js then sends any string given for a boolean parameter as
+>   `false`. Both spellings now map to the same TypeScript type, for the
+>   `postgres` and `pg` drivers.
+> - **Enums** become string literal unions (`"open" | "closed"`), arrays of them
+>   included.
+> - **Array parameters** (`any(sqlc.arg(ids)::uuid[])`) are typed by their
+>   element type through the same table, so `integer[]` is `number[]` rather
+>   than `string[]`; postgres.js serialises a JavaScript array for them.
+> - **Date and timestamp parameters** (`postgres` driver) take `Date | string`,
+>   which is what postgres.js accepts; both go through `new Date(x)`, so a
+>   timestamp keeps milliseconds only. Cast through text to keep microseconds.
+> - **Query text is escaped** in the emitted template literal: a backslash, a
+>   backtick or `${` in a query reaches the database as written. Upstream turned
+>   `'\%'` into `'%'` and produced invalid TypeScript for a backtick.
+> - Each query file is emitted once rather than once per query.
+>
+> Not fixed here, because the plugin does not decide it: sqlc's analysis marks
+> a `::text`-cast column non-nullable, and a string given to a `jsonb`
+> parameter is a JSON string value.
+>
+> Pin a release (the release notes carry the snippet):
+>
+> ```yaml
+> plugins:
+> - name: ts
+>   wasm:
+>     url: https://github.com/Wind-Growth/sqlc-gen-typescript/releases/download/<tag>/sqlc-gen-typescript.wasm
+>     sha256: <sha256 from the release notes>
+> ```
+>
+> Tests: `npm test` (code generator, no database) and `npm run test:postgres`
+> (needs `DATABASE_URL` with `test/postgres/schema.sql` applied and
+> `examples/plugin.wasm` built; regenerate with `sqlc generate` in
+> `test/postgres`). CI runs both against PostgreSQL 17. A `vX.Y.Z` tag publishes
+> the WASM as a release asset.
+
 > [!CAUTION]
 > Here be dragons! This plugin is still in early access. Expect breaking changes, missing functionality, and sub-optimal output. Please report all issues and errors. Good luck!
 

@@ -108,5 +108,6 @@
   },
   "include": [
     "src/*.ts",
+    "test/**/*.ts",
   ]
 }

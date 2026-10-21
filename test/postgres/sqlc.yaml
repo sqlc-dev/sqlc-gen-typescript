@@ -1,0 +1,19 @@
+version: "2"
+plugins:
+  - name: ts
+    wasm:
+      url: file://../../examples/plugin.wasm
+sql:
+  - engine: postgresql
+    schema: schema.sql
+    queries: query.sql
+    database:
+      uri: ${DATABASE_URL}
+    analyzer:
+      database: true
+    codegen:
+      - out: gen
+        plugin: ts
+        options:
+          runtime: node
+          driver: postgres

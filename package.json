@@ -4,12 +4,16 @@
   "description": "",
   "main": "app.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "tsc --noEmit && esbuild --bundle src/app.ts --tree-shaking=true --format=esm --target=es2020 --outfile=out.js",
+    "test": "esbuild --bundle test/codegen.test.ts --platform=node --format=cjs --target=node20 --alias:javy/fs=./test/javy-fs.ts --log-level=warning --outfile=test/out/codegen.test.cjs && node --test test/out/codegen.test.cjs",
+    "test:postgres": "esbuild --bundle test/postgres/postgres.test.ts --platform=node --format=esm --target=node20 --alias:javy/fs=./test/javy-fs.ts --external:postgres --log-level=warning --outfile=test/out/postgres.test.mjs && node --test test/out/postgres.test.mjs"
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@types/node": "^20.19.43",
     "esbuild": "^0.19.5",
+    "postgres": "^3.4.9",
     "typescript": "^5.2.2"
   },
   "dependencies": {

@@ -8,7 +8,7 @@ import {
 } from "typescript";
 
 import { Parameter, Column, Query } from "../gen/plugin/codegen_pb";
-import { argName, colName } from "./utlis";
+import { argName, colName, enumType, Enums, nullable, postgresTypeName } from "./utlis";
 
 function funcParamsDecl(iface: string | undefined, params: Parameter[]) {
   let funcParams = [
@@ -45,16 +45,17 @@ function funcParamsDecl(iface: string | undefined, params: Parameter[]) {
 }
 
 export class Driver {
+  private enums: Enums;
+
+  constructor(enums?: Enums) {
+    this.enums = enums ?? new Enums();
+  }
+
   columnType(column?: Column): TypeNode {
     if (column === undefined || column.type === undefined) {
       return factory.createKeywordTypeNode(SyntaxKind.AnyKeyword);
     }
-    // Some of the type names have the `pgcatalog.` prefix. Remove this.
-    let typeName = column.type.name;
-    const pgCatalog = "pg_catalog.";
-    if (typeName.startsWith(pgCatalog)) {
-      typeName = typeName.slice(pgCatalog.length);
-    }
+    const typeName = postgresTypeName(column.type);
     let typ: TypeNode = factory.createKeywordTypeNode(SyntaxKind.StringKeyword);
     switch (typeName) {
       case "aclitem": {
@@ -183,6 +184,10 @@ export class Driver {
         break;
       }
       case "money": {
+        // string
+        break;
+      }
+      case "numeric": {
         // string
         break;
       }
@@ -319,6 +324,13 @@ export class Driver {
         // string
         break;
       }
+      default: {
+        const vals = this.enums.lookup(column.type);
+        if (vals) {
+          typ = enumType(vals);
+        }
+        break;
+      }
     }
     if (column.isArray || column.arrayDims > 0) {
       let dims = Math.max(column.arrayDims || 1);
@@ -329,10 +341,7 @@ export class Driver {
     if (column.notNull) {
       return typ;
     }
-    return factory.createUnionTypeNode([
-      typ,
-      factory.createLiteralTypeNode(factory.createNull()),
-    ]);
+    return nullable(typ);
   }
 
   preamble(queries: Query[]) {

@@ -1,0 +1,42 @@
+name: release
+# A tag vX.Y.Z publishes the plugin as a release asset; pin it in sqlc.yaml by
+# its URL and the sha256 printed in the release notes.
+on:
+  push:
+    tags:
+      - 'v*'
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 20
+    - run: wget https://github.com/bytecodealliance/javy/releases/download/v1.2.0/javy-x86_64-linux-v1.2.0.gz
+    - run: gzip -d javy-x86_64-linux-v1.2.0.gz
+    - run: chmod +x javy-x86_64-linux-v1.2.0
+    - run: npm ci
+    - run: npx tsc --noEmit
+    - run: npm test
+    - run: npx esbuild --bundle src/app.ts --tree-shaking=true --format=esm --target=es2020 --outfile=out.js
+    - run: ./javy-x86_64-linux-v1.2.0 compile out.js -o sqlc-gen-typescript.wasm
+    - name: Publish
+      env:
+        GH_TOKEN: ${{ github.token }}
+        TAG: ${{ github.ref_name }}
+      run: |
+        sha=$(sha256sum sqlc-gen-typescript.wasm | cut -d' ' -f1)
+        url="https://github.com/${GITHUB_REPOSITORY}/releases/download/${TAG}/sqlc-gen-typescript.wasm"
+        {
+          echo '```yaml'
+          echo 'plugins:'
+          echo '- name: ts'
+          echo '  wasm:'
+          echo "    url: $url"
+          echo "    sha256: $sha"
+          echo '```'
+        } > notes.md
+        gh release create "$TAG" sqlc-gen-typescript.wasm --title "$TAG" --notes-file notes.md

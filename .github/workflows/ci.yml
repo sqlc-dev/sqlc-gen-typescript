@@ -11,14 +11,55 @@ jobs:
     - uses: actions/checkout@v4
     - uses: sqlc-dev/setup-sqlc@v4
       with:
-        sqlc-version: '1.24.0'
+        sqlc-version: '1.31.1'
     - uses: actions/setup-node@v4
+      with:
+        node-version: 20
     - run: wget https://github.com/bytecodealliance/javy/releases/download/v1.2.0/javy-x86_64-linux-v1.2.0.gz
     - run: gzip -d javy-x86_64-linux-v1.2.0.gz
     - run: chmod +x javy-x86_64-linux-v1.2.0
-    - run: npm install
+    - run: npm ci
     - run: npx tsc --noEmit
+    - run: npm test
     - run: npx esbuild --bundle src/app.ts --tree-shaking=true --format=esm --target=es2020 --outfile=out.js
     - run: ./javy-x86_64-linux-v1.2.0 compile out.js -o examples/plugin.wasm
     - run: sqlc -f sqlc.dev.yaml diff
       working-directory: examples
+    - uses: actions/upload-artifact@v4
+      with:
+        name: plugin.wasm
+        path: examples/plugin.wasm
+
+  # Generates test/postgres with the database analyzer (the way PostgreSQL
+  # itself names types) and runs the generated functions with postgres.js.
+  postgres:
+    needs: build
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres
+    steps:
+    - uses: actions/checkout@v4
+    - uses: sqlc-dev/setup-sqlc@v4
+      with:
+        sqlc-version: '1.31.1'
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 20
+    - uses: actions/download-artifact@v4
+      with:
+        name: plugin.wasm
+        path: examples
+    - run: npm ci
+    - run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f test/postgres/schema.sql
+    - run: sqlc diff
+      working-directory: test/postgres
+    - run: npm run test:postgres

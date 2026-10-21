@@ -7,7 +7,7 @@ import {
 } from "typescript";
 
 import { Parameter, Column } from "../gen/plugin/codegen_pb";
-import { argName, colName } from "./utlis";
+import { argName, colName, enumType, Enums, nullable, postgresTypeName } from "./utlis";
 import { log } from "../logger";
 
 function funcParamsDecl(iface: string | undefined, params: Parameter[]) {
@@ -44,17 +44,35 @@ function funcParamsDecl(iface: string | undefined, params: Parameter[]) {
   return funcParams;
 }
 
+// postgres.js parses date and timestamp columns into a Date. A parameter
+// accepts a Date or a string, both serialised through `new Date(x)`, so a
+// date-only string is UTC midnight and a timestamp keeps milliseconds only.
+function dateType(param: boolean): TypeNode {
+  const date = factory.createTypeReferenceNode(
+    factory.createIdentifier("Date"),
+    undefined
+  );
+  if (!param) {
+    return date;
+  }
+  return factory.createUnionTypeNode([
+    date,
+    factory.createKeywordTypeNode(SyntaxKind.StringKeyword),
+  ]);
+}
+
 export class Driver {
-  columnType(column?: Column): TypeNode {
+  private enums: Enums;
+
+  constructor(enums?: Enums) {
+    this.enums = enums ?? new Enums();
+  }
+
+  columnType(column?: Column, param = false): TypeNode {
     if (column === undefined || column.type === undefined) {
       return factory.createKeywordTypeNode(SyntaxKind.AnyKeyword);
     }
-    // Some of the type names have the `pgcatalog.` prefix. Remove this.
-    let typeName = column.type.name;
-    const pgCatalog = "pg_catalog.";
-    if (typeName.startsWith(pgCatalog)) {
-      typeName = typeName.slice(pgCatalog.length);
-    }
+    const typeName = postgresTypeName(column.type);
     let typ: TypeNode = factory.createKeywordTypeNode(SyntaxKind.StringKeyword);
     switch (typeName) {
       case "aclitem": {
@@ -102,10 +120,7 @@ export class Driver {
         break;
       }
       case "date": {
-        typ = factory.createTypeReferenceNode(
-          factory.createIdentifier("Date"),
-          undefined
-        );
+        typ = dateType(param);
         break;
       }
       case "float4": {
@@ -161,6 +176,10 @@ export class Driver {
         break;
       }
       case "money": {
+        // string
+        break;
+      }
+      case "numeric": {
         // string
         break;
       }
@@ -233,17 +252,11 @@ export class Driver {
         break;
       }
       case "timestamp": {
-        typ = factory.createTypeReferenceNode(
-          factory.createIdentifier("Date"),
-          undefined
-        );
+        typ = dateType(param);
         break;
       }
       case "timestamptz": {
-        typ = factory.createTypeReferenceNode(
-          factory.createIdentifier("Date"),
-          undefined
-        );
+        typ = dateType(param);
         break;
       }
       case "tsquery": {
@@ -279,7 +292,12 @@ export class Driver {
         break;
       }
       default: {
-        log(`unknown type ${column.type?.name}`);
+        const vals = this.enums.lookup(column.type);
+        if (vals) {
+          typ = enumType(vals);
+        } else {
+          log(`unknown type ${column.type?.name}`);
+        }
         break;
       }
     }
@@ -292,10 +310,7 @@ export class Driver {
     if (column.notNull) {
       return typ;
     }
-    return factory.createUnionTypeNode([
-      typ,
-      factory.createLiteralTypeNode(factory.createNull()),
-    ]);
+    return nullable(typ);
   }
 
   preamble(queries: unknown) {
